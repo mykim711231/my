@@ -22,7 +22,11 @@ OpenCode 데스크탑과 CLI에서 복제한 `my`의 `SKILL.md`를 스킬로 불
    ```json
    {
      "$schema": "https://opencode.ai/config.json",
-     "skills": { "paths": ["C:/Users/YOUR_WINDOWS_USER/src/my/plugins/my/skills"] }
+     "skills": {
+       "paths": [
+         "C:/Users/YOUR_WINDOWS_USER/src/my/plugins/my/skills"
+       ]
+     }
    }
    ```
 
@@ -31,7 +35,11 @@ OpenCode 데스크탑과 CLI에서 복제한 `my`의 `SKILL.md`를 스킬로 불
    ```json
    {
      "$schema": "https://opencode.ai/config.json",
-     "skills": { "paths": ["C:/Users/YOUR_WINDOWS_USER/src/my/plugins/my/skills"] }
+     "skills": {
+       "paths": [
+         "C:/Users/YOUR_WINDOWS_USER/src/my/plugins/my/skills"
+       ]
+     }
    }
    ```
 
