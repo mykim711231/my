@@ -1,3 +1,9 @@
+---
+topic: {{topic}}
+tags: []
+updated: {{date}}
+---
+
 # {{title}}
 
 ## 개요

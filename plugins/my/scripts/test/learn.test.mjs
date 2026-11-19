@@ -4,8 +4,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { snap, check, restore } from '../guard.mjs';
-import { learnRoot, newNote, relink, topics } from '../learn.mjs';
+import { snap, check as guardCheck, restore } from '../guard.mjs';
+import { learnRoot, newNote, relink, topics, check, log, stage, applyStaged } from '../learn.mjs';
+import { summary } from '../change-apply.mjs';
 
 const tmp = (p) => fs.mkdtempSync(path.join(os.tmpdir(), p));
 const read = (f) => fs.readFileSync(f, 'utf8');
@@ -22,11 +23,11 @@ test('편집 감시: 기록 파일 변경·새로 생긴 커밋 안 된 파일�
   g('commit', '-qm', 'init');
   fs.writeFileSync(path.join(root, 'a.md'), 'A2\n'); // 실행 전부터 커밋 안 된 변경
   const dir = snap({ cwd: root });
-  assert.deepEqual(check(dir).changed, []);
+  assert.deepEqual(guardCheck(dir).changed, []);
   fs.writeFileSync(path.join(root, 'a.md'), 'A3\n');
   fs.writeFileSync(path.join(root, 'b.md'), 'B2\n');
   fs.writeFileSync(path.join(root, 'c.md'), 'C\n');
-  const ch = Object.fromEntries(check(dir).changed.map((c) => [c.file, c]));
+  const ch = Object.fromEntries(guardCheck(dir).changed.map((c) => [c.file, c]));
   assert.equal(ch['a.md'].source, 'snap');
   assert.equal(ch['b.md'].source, 'HEAD');
   assert.equal(ch['c.md'].kind, '새 파일');
@@ -65,11 +66,77 @@ test('노트: 번호·이동 링크·index.md·INDEX.md를 함께 갱신한다',
   const idx = read(path.join(root, 'rag', 'index.md'));
   assert.match(idx, /- \[파이프라인\]\(01-pipeline\.md\)\n- \[벡터 DB\]\(02-vector-db\.md\)/);
   assert.match(read(path.join(root, 'INDEX.md')), /\[rag\]\(rag\/index\.md\) — 노트 2개, 최근 2026-11-19/);
-  const s = newNote(root, { topic: 'rag', name: 'bm25', subtopic: 'search', now });
-  assert.match(s.file, /rag\/01-search\/01-bm25\.md$/);
-  assert.match(read(s.file), /subtopic: "search"/);
-  assert.equal(newNote(root, { topic: 'rag', name: 'hybrid', subtopic: 'search', now }).file.match(/01-search\/02-hybrid/)?.length, 1);
-  assert.deepEqual(topics(root).map((t) => [t.topic, t.notes, t.subtopics]), [['rag', 4, 1]]);
+  assert.throws(() => newNote(root, { topic: 'rag', name: 'bm25', subtopic: 'search', now }), /섞을 수 없다/);
+  const s = newNote(root, { topic: 'search', name: 'bm25', subtopic: 'lexical', now });
+  assert.match(s.file, /search\/01-lexical\/01-bm25\.md$/);
+  assert.match(read(s.file), /subtopic: "lexical"/);
+  assert.equal(newNote(root, { topic: 'search', name: 'hybrid', subtopic: 'lexical', now }).file.match(/01-lexical\/02-hybrid/)?.length, 1);
+  assert.throws(() => newNote(root, { topic: 'search', name: 'x', now }), /--subtopic/);
+  assert.deepEqual(topics(root).map((t) => [t.topic, t.notes, t.subtopics]), [['rag', 2, 0], ['search', 2, 1]]);
   assert.deepEqual(relink(root, 'rag'), []);
+  assert.deepEqual(check(root).problems, []);
   assert.throws(() => newNote(root, { topic: '../x', name: 'n' }), /이름이 올바르지 않다/);
+});
+
+test('노트: 버전 폴더, versions 앞머리, 자료·이력 기록', () => {
+  const root = tmp('my-learn-v-');
+  const now = new Date(2026, 10, 19);
+  newNote(root, { topic: 'react', name: 'hooks', version: 18, now });
+  const b = newNote(root, { topic: 'react', name: 'actions', version: 'v19', versions: ['react=19.0'], now });
+  assert.match(b.file, /react\/v19\/01-actions\.md$/);
+  assert.match(read(b.file), /versions: \{"react": "19\.0"\}\nupdated:/);
+  assert.ok(read(b.file).includes('[목록](../index.md)'));
+  const idx = read(path.join(root, 'react', 'index.md'));
+  assert.match(idx, /### v18 \(이전 버전\)/);
+  assert.match(idx, /### v19\n\n- \[actions\]\(v19\/01-actions\.md\)/);
+  assert.deepEqual(topics(root)[0].versions, ['v18', 'v19']);
+  log(root, 'react', { sources: ['https://react.dev'], history: '버전 비교', now });
+  assert.equal(log(root, 'react', { sources: ['https://react.dev'] }), null);
+  assert.match(read(path.join(root, 'react', 'index.md')), /## 자료\n\n- https:\/\/react\.dev\n\n## 학습 이력\n\n- 2026-11-19 시작\n- 2026-11-19 버전 비교/);
+  const r = check(root);
+  assert.deepEqual(r.problems, []);
+  assert.equal(r.info.length, 1);
+  assert.match(r.info[0], /v18 — 이전 버전/);
+});
+
+test('점검: 깨진 링크·번호 누락·목록 불일치·오래된 INDEX를 찾는다', () => {
+  const root = tmp('my-learn-c-');
+  const now = new Date(2026, 10, 19);
+  const a = newNote(root, { topic: 'rag', name: 'a', now });
+  newNote(root, { topic: 'rag', name: 'b', now });
+  newNote(root, { topic: 'rag', name: 'c', now });
+  fs.appendFileSync(a.file, '\n[없음](09-x.md) [절대](C:/x.md) [제목](03-c.md#intro)\n');
+  fs.rmSync(path.join(root, 'rag', '02-b.md'));
+  fs.writeFileSync(path.join(root, 'rag', 'memo.md'), '# 메모\n');
+  const kinds = new Set(check(root).problems.map((p) => p.kind));
+  for (const k of ['깨진 링크', '절대 경로 링크', '다른 파일 제목 링크', '번호 누락', '번호 없는 노트', '노트 목록이 폴더와 다름', 'INDEX.md가 오래됨', '이동 링크 불일치']) assert.ok(kinds.has(k), k);
+});
+
+test('통합: 소주제로 나누는 변경안을 검사하고 적용한다(링크·앞머리 갱신)', () => {
+  const root = tmp('my-learn-s-');
+  const now = new Date(2026, 10, 19);
+  const a = newNote(root, { topic: 'rag', name: 'a', now });
+  newNote(root, { topic: 'rag', name: 'b', now });
+  newNote(root, { topic: 'other', name: 'x', now });
+  fs.appendFileSync(path.join(root, 'other', '01-x.md'), '\n[참고](../rag/02-b.md)\n');
+  fs.appendFileSync(a.file, '\n[다음 글](02-b.md)\n');
+  assert.deepEqual(check(root).problems, []);
+  const sub = (t) => `---\ntopic: "rag"\ntags: []\nupdated: 2026-11-19\n---\n\n# ${t}\n\n## 개요\n\n## 노트\n\n## 자료\n\n## 학습 이력\n`;
+  const plan = { changes: [
+    { move: 'rag/01-a.md', to: 'rag/01-base/01-a.md' },
+    { move: 'rag/02-b.md', to: 'rag/02-adv/01-b.md' },
+    { path: 'rag/01-base/index.md', content: sub('base') },
+    { path: 'rag/02-adv/index.md', content: sub('adv') },
+  ] };
+  const { dir } = stage(root, plan);
+  assert.ok(fs.existsSync(path.join(root, 'rag', '01-a.md')), '적용 전에는 그대로');
+  assert.ok(summary(dir).entries.length >= 6);
+  applyStaged(dir);
+  const moved = read(path.join(root, 'rag', '01-base', '01-a.md'));
+  assert.match(moved, /subtopic: "base"/);
+  assert.ok(moved.includes('[다음 글](../02-adv/01-b.md)'));
+  assert.ok(read(path.join(root, 'other', '01-x.md')).includes('[참고](../rag/02-adv/01-b.md)'));
+  assert.match(read(path.join(root, 'rag', 'index.md')), /- \[base\]\(01-base\/index\.md\)\n- \[adv\]\(02-adv\/index\.md\)/);
+  assert.deepEqual(check(root).problems, []);
+  assert.throws(() => stage(root, { changes: [{ path: 'rag/03-z.md', content: 'x' }] }), /새 문제/);
 });
