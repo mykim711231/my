@@ -52,7 +52,7 @@ node plugins/my/scripts/pack-web.mjs
 | `my-skill.zip` | Claude 웹의 **Customize → Skills → Upload a skill** 화면 |
 | `my-onefile.md` | 프로젝트·Gem 지침 또는 대화 첨부 |
 
-0.11.0에서 ChatGPT 웹의 플러그인 등록과 `@`로 `my`를 선택한 뒤의 현황 조회, Gemini 웹의 스킬 업로드 메뉴와 현황 응답을 확인했습니다. claude.ai 업로드 절차는 공식 도움말을 기준으로 안내합니다.
+0.11.0에서 ChatGPT 웹과 Claude 웹의 전용 ZIP 등록 및 현황 명령 실행을 확인했습니다. Gemini 웹에서는 스킬 업로드 메뉴와 현황 응답을 확인했습니다.
 
 ## 플러그인 기능과 호출 방법
 

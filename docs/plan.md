@@ -366,7 +366,7 @@ ChatGPT·Claude·Gemini 웹 채팅창에서도 같은 키워드를 쓴다. 파�
 | --- | --- | --- |
 | [ChatGPT 웹](Plugin-사용법/web-chatgpt.md) | **새 플러그인**에서 `my-chatgpt-plugin.zip` 등록 후 입력창에서 `@`로 `my` 선택 | ZIP 등록과 현황 명령 실행 확인 |
 | [Gemini 웹](Plugin-사용법/web-gemini.md) | **스킬 → 만들기 → 업로드**에서 `SKILL.md`가 있는 `my/` 폴더 선택 | 업로드 메뉴와 현황 응답 확인 |
-| [claude.ai](Plugin-사용법/web-claude.md) | **플러그인 업로드**에는 `my-claude-plugin.zip`, **스킬 업로드**에는 `my-skill.zip` 사용 | 플러그인 업로드의 매니페스트 요구사항을 화면에서 확인. 전용 ZIP은 로컬 검증 |
+| [claude.ai](Plugin-사용법/web-claude.md) | **플러그인 업로드**에는 `my-claude-plugin.zip`, **스킬 업로드**에는 `my-skill.zip` 사용 | 전용 플러그인 ZIP 등록, 스킬 1개 표시, 현황 명령 실행 확인 |
 
 지침 한 파일이 필요한 환경에서는 `my-onefile.md`를 프로젝트·Gem 지침에 붙이거나 대화에 첨부한다.
 

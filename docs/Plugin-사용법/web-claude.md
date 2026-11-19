@@ -23,11 +23,15 @@
 
 스킬을 쓸 수 없는 요금제나 환경이면 `my-onefile.md`를 프로젝트 지침(Project instructions)에 붙이거나 대화 첫 메시지에 첨부한다.
 
-플러그인 업로드에서 `.claude-plugin/plugin.json`이 필요하다는 오류가 표시되면 `my-claude-plugin.zip`을 선택한다. ZIP 구조는 자동 테스트로 검증한다. claude.ai에서 업로드 성공과 실행은 미검증이다.
+플러그인 업로드에서 `.claude-plugin/plugin.json`이 필요하다는 오류가 표시되면 `my-claude-plugin.zip`을 선택한다. ZIP 구조는 자동 테스트로 검증한다.
 
 ## 설치 확인
 
-새 대화에서 `마이 플러그인 현황`을 보낸다. 플러그인으로 설치한 스킬이 자동으로 적용되지 않으면 입력창의 `/` 또는 `+` 목록에서 **my**의 스킬을 선택해 보낸다. 답에 "채팅 모드 — 파일 쓰기·명령 실행 없음", 버전, 키워드 표가 나오는지 확인한다. [Claude 플러그인 도움말](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+1. 등록된 **My** 상세 화면에서 현재 버전과 **Skills 1개**를 확인하고 **채팅에서 사용해보기**를 누른다.
+2. `마이 플러그인 현황`을 보낸다. 스킬이 자동으로 적용되지 않으면 입력창의 `/` 또는 `+` 목록에서 **My**의 스킬을 선택해 보낸다. [Claude 플러그인 도움말](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+3. `my 플러그인 현황 (웹)`, 버전, 키워드 표가 표시되는지 확인한다.
+
+Claude 웹에서 `my-claude-plugin.zip`으로 0.11.0을 등록하고 현황 명령을 실행했다. 표에는 채팅 모드 21개와 로컬 전용 2개가 표시됐다.
 
 ## 작업별 호출
 

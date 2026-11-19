@@ -6,7 +6,7 @@
 - `pack-web.mjs`가 라우터 스킬 `my/`, `my-skill.zip`, `my-chatgpt-plugin.zip`, `my-claude-plugin.zip`, `my-onefile.md`를 `dist/web/`에 만든다
 - `learn.mjs import`: 채팅에서 받은 노트 md를 번호를 매겨 학습 폴더에 들인다
 - ChatGPT 웹에서 플러그인 ZIP 등록과 `my` 선택 후 현황 명령 실행을 확인했다. Gemini 웹에서는 스킬 업로드 메뉴와 현황 응답을 확인했다
-- Claude 웹의 플러그인 업로드는 `.claude-plugin/plugin.json`이 있는 전용 ZIP을 사용한다. ZIP 구조를 로컬에서 확인했다. 웹 업로드 성공과 실행은 미검증이다
+- Claude 웹에서 `my-claude-plugin.zip` 등록, 스킬 1개 표시, 현황 명령 실행을 확인했다
 
 ## 0.10.2 — 2026-11-19
 
