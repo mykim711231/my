@@ -94,7 +94,9 @@ export function summary(dir) {
 export function diff(dir) {
   const s = load(dir);
   const out = [];
-  const nul = os.devNull;
+  // 빈 쪽은 빈 파일로 둔다(Windows의 git은 os.devNull을 읽지 못한다)
+  const nul = path.join(dir, 'empty');
+  fs.writeFileSync(nul, '');
   for (const e of s.entries) {
     const a = e.before ? path.join(dir, 'before', e.id) : nul;
     const b = e.after ? path.join(dir, 'after', e.id) : nul;

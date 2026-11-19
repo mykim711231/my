@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0 — 2026-11-19
+
+- 설정 동기화 스킬 추가(sync.mjs: 규칙 파일 AGENTS.md 참조, 스킬 폴더째 이동, 승인 diff·원본 변경 감지), change-apply 새 파일 diff 수정(Windows)
+
 ## 0.8.0 — 2026-11-19
 
 - 프로젝트 스킬 추가(생성·정의·구현·검증·배포, project.mjs, 프로젝트 템플릿)
