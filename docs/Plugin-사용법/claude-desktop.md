@@ -4,9 +4,9 @@ Claude 앱의 **Code 탭**에서 로컬 프로젝트를 열어 사용한다. `my
 
 ## 설치
 
-1. Claude 앱에서 **Settings → Plugins → Add → Add Marketplace → Add from a repository**를 선택한다.
-2. `https://github.com/mykim711231/my`를 입력하고 **Sync**를 누른다.
-3. `my`를 찾아 설치한다. Code 탭의 로컬 세션에서도 입력창 옆 **+ → Plugins → Add plugin**을 열어 등록된 마켓플레이스에서 설치할 수 있다. [Claude 앱에서 GitHub 마켓플레이스 추가](https://developers.openai.com/learn/developers-codex-plugin)
+1. Claude 앱에서 **Customize → Plugins** 탭의 **Add → Add marketplace**를 선택한다. [Use plugins in Claude](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+2. `mykim711231/my`(또는 `https://github.com/mykim711231/my`)를 입력해 추가한다.
+3. `my`를 찾아 설치한다. Code 탭의 로컬 세션에서도 입력창 옆 **+**에서 플러그인 브라우저(**Plugins**, **Browse plugins** 또는 **Manage plugins**)를 열고 Marketplaces 탭에서 같은 저장소를 추가할 수 있다. 메뉴 이름은 앱 버전에 따라 다르다. [Install and manage plugins](https://code.claude.com/docs/en/plugins/install)
 
 앱에서 마켓플레이스 추가 메뉴를 찾을 수 없다면 [Claude Code CLI 가이드](claude-code.md)로 등록한 뒤 Claude 앱의 Code 탭에서 플러그인 목록을 다시 확인한다. 로컬 세션은 같은 Claude Code 설정 파일을 사용한다. [Claude Code 설정](https://code.claude.com/docs/en/settings)
 

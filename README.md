@@ -4,47 +4,43 @@
 
 ## 설치하고 시작하기
 
-### 데스크탑
+쓰는 곳의 가이드를 따라 설치한 뒤, 새 세션에서 "설치 확인" 칸의 입력으로 버전과 전체 키워드가 나오는지 봅니다. "`마이` 키워드" 칸이 자동이 아닌 곳에서는 스킬 이름으로 부르거나 모델이 키워드 표를 보고 고릅니다.
 
-| 앱 | 설치·사용 가이드 |
-| --- | --- |
-| Claude | [Claude 데스크탑의 Code 탭](docs/Plugin-사용법/claude-desktop.md) |
-| ChatGPT | [ChatGPT 데스크탑의 Codex](docs/Plugin-사용법/chatgpt-desktop.md) |
-| OpenCode | [OpenCode 데스크탑](docs/Plugin-사용법/opencode-desktop.md#데스크탑에서-실행) |
+| 사용 환경 | 설치 방식 | 설치 확인 | `마이` 키워드 | 가이드 |
+| --- | --- | --- | --- | --- |
+| Claude 데스크탑 (Code 탭) | 앱에서 마켓플레이스 추가 후 설치 | `마이 플러그인 현황` | 자동(훅) | [Claude 데스크탑](docs/Plugin-사용법/claude-desktop.md) |
+| Claude Code CLI | 마켓플레이스 명령 (아래) | `마이 플러그인 현황` | 자동(훅) | [Claude Code CLI](docs/Plugin-사용법/claude-code.md) |
+| ChatGPT 데스크탑 (Codex) | 마켓플레이스 등록 후 앱에서 설치 | `my:plugin-status` | CLI `/hooks` 승인 후 자동 | [ChatGPT 데스크탑](docs/Plugin-사용법/chatgpt-desktop.md) |
+| Codex CLI | 마켓플레이스 명령 (아래) | `my:plugin-status` | `/hooks` 승인 후 자동 | [Codex CLI](docs/Plugin-사용법/codex.md) |
+| OpenCode 데스크탑·CLI | 저장소 복제 후 `opencode.json`에 스킬 경로 등록 | `@plugin-status` | 없음 | [OpenCode](docs/Plugin-사용법/opencode-desktop.md) |
+| Gemini CLI | 저장소 복제 후 `SKILL.md` 경로 지정 | `plugin-status/SKILL.md` 경로로 요청 | 없음 | [Gemini CLI](docs/Plugin-사용법/gemini-cli.md) |
+| claude.ai 웹 | 웹 패키지 zip을 스킬로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [claude.ai](docs/Plugin-사용법/web-claude.md) |
+| ChatGPT 웹 | 웹 패키지를 Skills로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [ChatGPT](docs/Plugin-사용법/web-chatgpt.md) |
+| Gemini 웹 | 한 파일 판을 스킬·Gem 지침·첨부로 | `마이 플러그인 현황` | 모델이 표로 판단 | [Gemini](docs/Plugin-사용법/web-gemini.md) |
 
-### CLI
+### 마켓플레이스 명령
 
-**[Claude Code CLI](docs/Plugin-사용법/claude-code.md)**
+Claude Code CLI:
 
 ```powershell
 claude plugin marketplace add mykim711231/my
 claude plugin install my@my
 ```
 
-**[Codex CLI](docs/Plugin-사용법/codex.md)**
+Codex CLI:
 
 ```powershell
 codex plugin marketplace add mykim711231/my
 codex plugin add my@my
 ```
 
-**[OpenCode CLI](docs/Plugin-사용법/opencode-desktop.md#cli에서-실행)**는 프로젝트 설정에 `plugins/my/skills` 경로를 등록한 뒤 프로젝트 루트에서 `opencode`를 실행합니다.
-
-### 기타 사용 경로
-
-**[Gemini CLI](docs/Plugin-사용법/gemini-cli.md)**는 전용 확장이 추가될 때까지 `mykim711231/my`를 복제해 `SKILL.md`를 경로로 지정합니다.
-
 ### 웹 채팅 (채팅 모드)
 
-웹 채팅에서는 파일을 쓰거나 명령을 실행하지 않고, 결과를 화면과 md로 줍니다. `작업 종료`·`작업 이어서`는 인계 md로 새 채팅 창에서 이어 가는 방식이 됩니다. 저장소를 복제한 뒤 `node plugins/my/scripts/pack-web.mjs`로 웹 패키지(`dist/web/`)를 만들어 올립니다.
+웹 채팅에서는 파일을 쓰거나 명령을 실행하지 않고, 결과를 화면과 md로 줍니다. `작업 종료`·`작업 이어서`는 인계 md로 새 채팅 창에서 이어 가는 방식이 됩니다. 웹 패키지(`dist/web/`)는 저장소를 복제한 뒤 아래 명령으로 만듭니다. 서비스별 업로드는 아직 직접 시험하지 않았습니다(미검증).
 
-| 서비스 | 가이드 |
-| --- | --- |
-| claude.ai | [스킬 zip 업로드](docs/Plugin-사용법/web-claude.md) |
-| ChatGPT | [Skills 업로드](docs/Plugin-사용법/web-chatgpt.md) |
-| Gemini | [스킬·Gem·첨부](docs/Plugin-사용법/web-gemini.md) |
-
-새 세션에서 `plugin-status` 스킬을 열어 버전과 전체 키워드를 확인합니다. 키워드 훅이 동작하면 `마이 플러그인 현황`으로 같은 스킬을 실행할 수 있습니다. Codex에서 훅을 사용하려면 CLI의 `/hooks`에서 해당 명령을 검토하고 신뢰합니다.
+```powershell
+node plugins/my/scripts/pack-web.mjs
+```
 
 ## 플러그인 기능과 호출 방법
 
