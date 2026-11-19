@@ -4,23 +4,35 @@
 
 ## 설치하고 시작하기
 
-**[Claude Code](docs/Plugin-사용법/claude-code.md)**
+### 데스크탑
+
+| 앱 | 설치·사용 가이드 |
+| --- | --- |
+| Claude | [Claude 데스크탑의 Code 탭](docs/Plugin-사용법/claude-desktop.md) |
+| ChatGPT | [ChatGPT 데스크탑의 Codex](docs/Plugin-사용법/chatgpt-desktop.md) |
+| OpenCode | [OpenCode 데스크탑](docs/Plugin-사용법/opencode-desktop.md#데스크탑에서-실행) |
+
+### CLI
+
+**[Claude Code CLI](docs/Plugin-사용법/claude-code.md)**
 
 ```powershell
 claude plugin marketplace add mykim711231/my
 claude plugin install my@my
 ```
 
-**[Codex](docs/Plugin-사용법/codex.md)**
+**[Codex CLI](docs/Plugin-사용법/codex.md)**
 
 ```powershell
 codex plugin marketplace add mykim711231/my
 codex plugin add my@my
 ```
 
-**[Gemini CLI](docs/Plugin-사용법/gemini-cli.md)**는 전용 확장이 추가될 때까지 `mykim711231/my`를 복제해 `SKILL.md`를 경로로 지정합니다.
+**[OpenCode CLI](docs/Plugin-사용법/opencode-desktop.md#cli에서-실행)**는 프로젝트 설정에 `plugins/my/skills` 경로를 등록한 뒤 프로젝트 루트에서 `opencode`를 실행합니다.
 
-**[OpenCode 데스크탑](docs/Plugin-사용법/opencode-desktop.md)**에서는 저장소를 복제한 뒤 프로젝트 설정에 `plugins/my/skills` 경로를 등록합니다.
+### 기타 사용 경로
+
+**[Gemini CLI](docs/Plugin-사용법/gemini-cli.md)**는 전용 확장이 추가될 때까지 `mykim711231/my`를 복제해 `SKILL.md`를 경로로 지정합니다.
 
 새 세션에서 `plugin-status` 스킬을 열어 버전과 전체 키워드를 확인합니다. 키워드 훅이 동작하면 `마이 플러그인 현황`으로 같은 스킬을 실행할 수 있습니다. Codex에서 훅을 사용하려면 CLI의 `/hooks`에서 해당 명령을 검토하고 신뢰합니다.
 
@@ -33,7 +45,7 @@ codex plugin add my@my
 | Claude Code | `마이 기존 소스 학습 ./src` 또는 `/my:learn-source ./src` |
 | Codex | `$` 목록에서 `my:learn-source`를 선택하고 `./src를 함께 읽어 줘`를 덧붙입니다. 키워드 훅이 동작하면 `마이 기존 소스 학습 ./src`도 사용할 수 있습니다. |
 | Gemini CLI | `<로컬 저장소 절대 경로>/plugins/my/skills/learn-source/SKILL.md를 읽고 현재 프로젝트의 ./src를 함께 읽어 줘`라고 요청합니다. |
-| OpenCode 데스크탑 | `@learn-source 현재 프로젝트의 ./src를 함께 읽어 줘`라고 입력합니다. |
+| OpenCode | 데스크탑과 CLI에서 `@learn-source 현재 프로젝트의 ./src를 함께 읽어 줘`라고 입력합니다. |
 
 아래 표의 스킬 이름을 바꿔 같은 방식으로 호출할 수 있습니다. `{…}`에는 실제 값을 넣습니다. `[…]`로 표시한 학습 자료나 경로는 호출할 때 함께 적거나 스킬이 물을 때 알려 줍니다.
 
