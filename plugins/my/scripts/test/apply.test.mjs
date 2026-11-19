@@ -79,6 +79,14 @@ test('완료 표시하면 현황 개선 대기에서 빠진다', () => {
   assert.match(out, /- 1건 .*\n {2}- 남을 것/);
 });
 
+test('현황: 구현된 키워드만 표에, 미구현은 따로 묶는다', () => {
+  const out = buildStatus({ env: { CLAUDE_PLUGIN_DATA: tmp() }, home: tmp(), cwd: tmp() });
+  const table = out.split('### 키워드 → 동작')[1].split('\n### ')[0];
+  assert.match(table, /`plugin-apply`/);
+  assert.doesNotMatch(table, /미구현/);
+  assert.match(out, /### 아직 없는 키워드\n\n- `마이 /);
+});
+
 test('커밋 안 된 변경 수: git 저장소가 아니면 null', () => {
   const { p } = fakeSrc();
   assert.equal(dirtyCount(p), null);

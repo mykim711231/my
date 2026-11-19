@@ -81,16 +81,24 @@ export function buildStatus({ env = process.env, home = os.homedir(), cwd = proc
     `- 아래 키워드를 \`${table.prefix} \`로 시작해 그대로 입력한다. \`{ }\`는 직접 채우는 값이다. 예: \`${table.prefix} 플러그인 문제 키워드가 두 번 들어감\``,
     `- 첫 단어까지만 입력하면(예: \`${table.prefix} 학습\`) 그 묶음의 양식만 보여 주고 아무 작업도 하지 않는다.`,
     `- \`${table.prefix}\` 뒤에 등록되지 않은 말이 오면 일반 대화로 처리한다. 영문 \`my\`는 키워드로 인식하지 않는다.`,
-    '- (미구현) 스킬은 아직 동작하지 않는다.',
+    '- "아직 없는 키워드"는 입력해도 동작하지 않는다.',
     '',
   );
   out.push('### 키워드 → 동작', '', '| 키워드 | 스킬 | 동작 |', '|---|---|---|');
+  // 구현된 키워드만 표에 넣고, 미구현은 스킬 묶음(작업·학습·프로젝트 …)별 한 줄로 접는다.
+  const missing = new Map();
   for (const c of table.commands) {
     const fm = frontmatter(path.join(ROOT, 'skills', c.skill, 'SKILL.md'));
-    const desc = fm === null ? '(미구현)' : (fm.description || '').split(/(?<=\.)\s/)[0];
+    if (fm === null) {
+      const g = c.skill.split('-')[0];
+      missing.set(g, [...(missing.get(g) || []), `\`${table.prefix} ${c.form}\``]);
+      continue;
+    }
+    const desc = (fm.description || '').split(/(?<=\.)\s/)[0];
     out.push(`| \`${table.prefix} ${c.form}\` | \`${c.skill}\` | ${desc.replace(/\|/g, '\\|')} |`);
   }
   out.push('');
+  if (missing.size) out.push('### 아직 없는 키워드', '', ...[...missing.values()].map((l) => `- ${l.join(' · ')}`), '');
 
   out.push('### 최근 변경', '', ...changelog(), '');
 
