@@ -36,6 +36,8 @@ const pad = (n) => String(n).padStart(2, '0');
 const today = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const slash = (p) => p.replace(/\\/g, '/');
 const readText = (f) => fs.readFileSync(f, 'utf8');
+// 템플릿은 CRLF로 받아졌어도(Windows git autocrlf) LF로 읽는다. 노트는 LF로 쓴다.
+const readTemplate = (f) => readText(f).replace(/\r\n/g, '\n');
 const eolOf = (t) => (t.includes('\r\n') ? '\r\n' : '\n');
 
 function git(cwd, args) {
@@ -210,7 +212,7 @@ function ensureIndex(dir, title, date, topic = title) {
   const file = path.join(dir, 'index.md');
   if (fs.existsSync(file)) return null;
   fs.mkdirSync(dir, { recursive: true });
-  const t = readText(TOPIC_TEMPLATE).replaceAll("{{topic}}", JSON.stringify(topic)).replaceAll("{{title}}", title).replaceAll('{{date}}', date);
+  const t = readTemplate(TOPIC_TEMPLATE).replaceAll("{{topic}}", JSON.stringify(topic)).replaceAll("{{title}}", title).replaceAll('{{date}}', date);
   fs.writeFileSync(file, t, { flag: 'wx' });
   return slash(file);
 }
@@ -254,7 +256,7 @@ export function newNote(root, { topic, name, subtopic = '', version = '', versio
     if (!k || !rest.length) throw new Error(`--versions는 이름=버전으로 준다: "${x}"`);
     return `${JSON.stringify(k.trim())}: ${JSON.stringify(rest.join('=').trim())}`;
   });
-  const text = readText(NOTE_TEMPLATE)
+  const text = readTemplate(NOTE_TEMPLATE)
     .replace('{{topic}}', JSON.stringify(topic))
     .replace(/^subtopic: \{\{subtopic\}\}\r?\n/m, subtopic ? `subtopic: ${JSON.stringify(subtopic.replace(NUM, '$2'))}\n` : '')
     .replace('{{tags}}', yamlList(tags))

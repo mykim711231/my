@@ -17,6 +17,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const TEMPLATES = path.resolve(HERE, '..', 'templates', 'project');
 
 const pad = (n) => String(n).padStart(2, '0');
+// 템플릿이 CRLF로 받아졌어도(Windows git autocrlf) LF로 읽는다.
+const readTemplate = (f) => fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
 export const today = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const slash = (p) => p.replace(/\\/g, '/');
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -95,7 +97,7 @@ export function plan(root, specs, { name, gemini = false, vars = {}, date = toda
   const files = [];
   const add = (rel, src, v) => {
     const target = render(outName(rel), v, src);
-    files.push({ path: target, content: render(fs.readFileSync(src, 'utf8'), v, src) });
+    files.push({ path: target, content: render(readTemplate(src), v, src) });
   };
   const common = path.join(dir, 'common');
   const cv = { ...base, root: '.', contracts: 'contracts' };
@@ -113,7 +115,7 @@ export function plan(root, specs, { name, gemini = false, vars = {}, date = toda
         add(out, path.join(sdir, sub, rel), v);
       }
     const part = path.join(sdir, 'stack.part.md');
-    if (stackMd && fs.existsSync(part)) stackMd.content = stackMd.content.replace(/\n*$/, '\n\n') + render(fs.readFileSync(part, 'utf8'), v, part);
+    if (stackMd && fs.existsSync(part)) stackMd.content = stackMd.content.replace(/\n*$/, '\n\n') + render(readTemplate(part), v, part);
   }
   for (const f of files) f.exists = fs.existsSync(path.join(root, f.path));
   return { stacks: list, files };
@@ -146,8 +148,7 @@ export function newSpec(root, name, { title, date = today(), dir = TEMPLATES } =
   const nums = fs.readdirSync(sdir).map((f) => /^(\d+)-.+\.md$/.exec(f)).filter(Boolean).map((m) => Number(m[1]));
   if (fs.readdirSync(sdir).some((f) => f.replace(/^\d+-/, '') === `${name}.md`)) throw new Error(`같은 이름의 명세가 있다: ${name}`);
   const file = path.join(sdir, `${pad(Math.max(0, ...nums) + 1)}-${name}.md`);
-  const text = fs
-    .readFileSync(tpl, 'utf8')
+  const text = readTemplate(tpl)
     .replace(/\{\{title\}\}/g, title)
     .replace(/\{\{date\}\}/g, date)
     .replace(/^updated:.*$/m, `updated: ${date}`)

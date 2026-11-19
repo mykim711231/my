@@ -56,6 +56,7 @@ export function newHandoff(root, { branch = '', spec = '', now = new Date(), tem
   for (let n = 2; fs.existsSync(file); n++) file = path.join(dir, `${base}-${n}.md`);
   const text = fs
     .readFileSync(template, 'utf8')
+    .replace(/\r\n/g, '\n') // 템플릿이 CRLF로 받아졌어도 LF로 쓴다
     .replace('{{branch}}', JSON.stringify(branch))
     .replace('{{spec}}', JSON.stringify(spec))
     .replace('{{date}}', `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`);

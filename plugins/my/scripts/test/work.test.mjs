@@ -45,3 +45,13 @@ test('명세 작업 체크박스와 인계 다음 할 일', () => {
   assert.match(s, /### 할 일\n\n- docs\/specs\/02-b\.md[\s\S]*테스트 추가 \(인계 문서\)/);
   assert.match(s, /### 진행\n\n- docs\/specs\/01-a\.md — 작업 1\/3\n  - \[ \] 둘/);
 });
+
+test('인계 문서: 템플릿이 CRLF로 받아졌어도(Windows autocrlf) LF로 쓴다', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'my-work-crlf-'));
+  const tpl = path.join(root, 'handoff.md');
+  fs.writeFileSync(tpl, '---\r\nbranch: {{branch}}\r\n---\r\n\r\n## 다음 할 일\r\n');
+  const f = newHandoff(root, { branch: 'main', template: tpl });
+  const text = fs.readFileSync(f, 'utf8');
+  assert.ok(!text.includes('\r'), text);
+  assert.match(text, /branch: "main"\n/);
+});

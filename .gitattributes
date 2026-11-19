@@ -1,0 +1,2 @@
+# 노트·템플릿·스크립트는 LF로 받는다. Windows의 core.autocrlf=true에서도 CRLF로 바뀌지 않게 한다.
+* text=auto eol=lf
