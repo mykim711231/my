@@ -26,9 +26,26 @@ test('등록 양식은 해당 스킬로', () => {
   assert.equal(skillOf('마이 학습 점검'), 'learn-manage');
 });
 
-test('고정 단어는 공백이나 끝에서 끊긴다: 현황판은 현황이 아니다', () => {
-  assert.equal(skillOf('마이 플러그인 현황판'), 'usage');
-  assert.equal(skillOf('마이 작업 시작합니다'), 'usage');
+test('고정 단어는 공백이나 끝에서 끊긴다: 현황판은 현황이 아니다(일반 대화)', () => {
+  assert.equal(skillOf('마이 플러그인 현황판'), null);
+  assert.equal(skillOf('마이 작업 시작합니다'), null);
+});
+
+test('양식에 없는 말이 붙으면 일반 대화로 둔다', () => {
+  for (const s of ['마이 작업 종료, 이어서는 새창에서', '마이 작업 종료?', '마이 플러그인 현황판 만들자', '마이 학습 정리해줘']) {
+    assert.equal(route(s, T), null, s);
+  }
+});
+
+test('양식 앞부분에서 끝나면 그 양식들만 사용법으로', () => {
+  let r = route('마이 작업', T);
+  assert.equal(r.kind, 'usage');
+  assert.equal(r.forms.length, 4);
+  r = route('마이 프로젝트 todo', T);
+  assert.equal(r.kind, 'usage');
+  assert.ok(r.forms.every((c) => c.form.startsWith('프로젝트 {name}')));
+  r = route('마이 플러그인 문제', T);
+  assert.deepEqual(r.forms.map((c) => c.skill), ['plugin-issue']);
 });
 
 test('인자를 꺼낸다', () => {

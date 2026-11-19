@@ -39,6 +39,8 @@ function compile(cmd) {
   return {
     ...cmd,
     first: tokens[0],
+    // 앞부분만 입력했는지 볼 때 쓰는 단어별 정규식. 인자 자리는 어떤 한 단어든 맞는다.
+    tokenRes: tokens.map((tok, i) => new RegExp('^' + (/^\{[^}]+\}$/.test(tok) ? '\\S+' : parts[i]) + '$')),
     names,
     fixedLen: fixed.replace(/\s/g, '').length,
     re: new RegExp('^' + parts.join('\\s+') + '(?=\\s|$)'),
@@ -65,7 +67,15 @@ export function route(text, table) {
     if (Object.values(args).some((v) => v === '')) continue;
     hits.push({ cmd: c, args });
   }
-  if (hits.length === 0) return { kind: 'usage', forms: family };
+  if (hits.length === 0) {
+    // 양식의 앞부분에서 입력이 끝났을 때만 사용법을 보인다(예: "마이 작업").
+    // 양식에 없는 말이 붙으면(예: "마이 작업 종료, 이어서는…") 일반 대화로 둔다.
+    const words = rest.split(/\s+/);
+    const partial = family.filter(
+      (c) => words.length < c.tokenRes.length && words.every((w, i) => c.tokenRes[i].test(w)),
+    );
+    return partial.length ? { kind: 'usage', forms: partial } : null;
+  }
   const best = Math.max(...hits.map((h) => h.cmd.fixedLen));
   const top = hits.filter((h) => h.cmd.fixedLen === best);
   if (top.length > 1) return { kind: 'usage', forms: top.map((h) => h.cmd) };
