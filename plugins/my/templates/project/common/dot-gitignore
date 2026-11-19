@@ -1,0 +1,24 @@
+# 비밀
+.env
+.env.*
+!.env.example
+
+# 의존성·빌드
+node_modules/
+.venv/
+__pycache__/
+.gradle/
+build/
+dist/
+target/
+
+# 테스트 결과
+coverage/
+test-results/
+playwright-report/
+.pytest_cache/
+
+# 기타
+*.log
+.DS_Store
+.idea/

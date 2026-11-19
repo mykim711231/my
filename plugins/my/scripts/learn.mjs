@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { gitRoot, normalizePath, resolveConfig, suggestLearnRoot } from './config.mjs';
 import { frontmatter } from './status.mjs';
 import * as change from './change-apply.mjs';
+import { LINK, encodingProblems, external, headingProblems, linkProblems, mdFiles } from './md.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const NOTE_TEMPLATE = path.resolve(HERE, '..', 'templates', 'learn-note.md');
@@ -301,20 +302,6 @@ export function log(root, topic, { subtopic = '', sources = [], history = '', no
 
 // ── 점검 ──────────────────────────────────────────────
 
-const stripCode = (text) => text.replace(/^(```|~~~)[\s\S]*?^\1/gm, '');
-const LINK = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
-const external = (t) => /^[a-z][a-z0-9+.-]*:/i.test(t) && !/^[A-Za-z]:[\\/]/.test(t);
-
-function mdFiles(dir, out = []) {
-  for (const e of entries(dir)) {
-    if (e.name.startsWith('.')) continue;
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) mdFiles(p, out);
-    else if (e.name.endsWith('.md')) out.push(p);
-  }
-  return out;
-}
-
 export function check(root) {
   const problems = [];
   const info = [];
@@ -327,8 +314,7 @@ export function check(root) {
     const raw = fs.readFileSync(f);
     const text = raw.toString('utf8');
     const r = rel(f);
-    if (raw[0] === 0xef && raw[1] === 0xbb && raw[2] === 0xbf) add(f, 'BOM', 'UTF-8 BOM을 지운다(앞머리를 읽지 못한다)');
-    if (text.includes('\r\n')) add(f, '줄바꿈', 'CRLF — LF로 쓴다');
+    for (const p of encodingProblems(raw)) add(f, p.kind, p.detail);
     const parts = r.split('/');
     const isNote = NUM.test(path.basename(f)) && parts.length >= 2;
     if (isNote) {
@@ -343,31 +329,8 @@ export function check(root) {
         if (inSub && fm.subtopic && fm.subtopic !== parts[1].replace(NUM, '$2')) add(f, '앞머리 subtopic 불일치', `${fm.subtopic} ≠ 폴더 ${parts[1]}`);
       }
     }
-    if (path.basename(f) !== 'INDEX.md') {
-      const body = stripCode(text.replace(/^---\r?\n[\s\S]*?\r?\n---/, ''));
-      const heads = [...body.matchAll(/^(#{1,6}) /gm)].map((m) => m[1].length);
-      const h1 = heads.filter((h) => h === 1).length;
-      if (h1 !== 1) add(f, 'H1 개수', `${h1}개 — 하나만 둔다`);
-      for (let i = 1; i < heads.length; i++) if (heads[i] > heads[i - 1] + 1) add(f, '제목 단계 건너뜀', `${'#'.repeat(heads[i - 1])} 다음 ${'#'.repeat(heads[i])}`);
-    }
-    for (const m of stripCode(text).matchAll(LINK)) {
-      const t = m[1];
-      if (t.startsWith('#') || (external(t) && !/^file:/i.test(t))) continue;
-      if (/^file:|^[A-Za-z]:[\\/]|^[\\/]/.test(t)) {
-        add(f, '절대 경로 링크', t);
-        continue;
-      }
-      const [p, anchor] = t.split('#');
-      let target;
-      try {
-        target = path.resolve(path.dirname(f), decodeURI(p));
-      } catch {
-        target = path.resolve(path.dirname(f), p);
-      }
-      if (!fs.existsSync(target)) add(f, '깨진 링크', t);
-      else if (anchor && p.endsWith('.md')) add(f, '다른 파일 제목 링크', `${t} — 파일로만 링크한다`);
-      if (p.includes('\\')) add(f, '링크 구분자', `${t} — /를 쓴다`);
-    }
+    if (path.basename(f) !== 'INDEX.md') for (const p of headingProblems(text)) add(f, p.kind, p.detail);
+    for (const p of linkProblems(f, text)) add(f, p.kind, p.detail);
   }
 
   // 폴더 단위: 구조, 번호, 목록, 이동 링크
