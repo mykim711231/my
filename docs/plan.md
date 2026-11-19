@@ -1,8 +1,8 @@
 # `my` 플러그인 정의서
 
-- 버전: v0.4 (2-1장 채팅 모드 추가)
-- 작성일: 2026-11-18
-- 상태: 기획 중 (표준 결정 단계)
+- 버전: v0.5 (0-1 구현 현황 추가, 2장 표 정리)
+- 작성일: 2026-11-18, 갱신 2026-11-19
+- 상태: 구현 중 (플러그인 0.11.0). 무엇이 구현됐는지는 0-1, 바뀐 내용은 [CHANGELOG](../plugins/my/CHANGELOG.md)
 
 ## 0. 개요
 
@@ -12,6 +12,36 @@
   - 이유: `my`만 설치한 PC에서는 다른 플러그인의 스킬이나 에이전트 호출이 실패한다. `my`를 고치고 배포하는 곳도 이 저장소 하나로 모인다.
   - 허용한 외부 플러그인도 없으면 대체 경로로 동작한다(G-2 "권장 플러그인 설치 안내").
   - Anthropic 플러그인은 Claude Code에서만 쓸 수 있다. 다른 도구에서는 처음부터 대체 경로로 동작한다. context7은 MCP 서버라서 도구와 상관없이 연결할 수 있다(연결 방법은 도구마다 다르다).
+
+## 0-1. 구현 현황
+
+이 문서는 설계다. 아래 표는 설계 중 무엇이 저장소에 들어갔는지를 보여 준다. 스크립트는 `plugins/my/scripts/`, 시험은 `scripts/test/*.test.mjs`에 있다.
+
+| 영역 | 스킬 | 스크립트 | 들어간 버전 |
+|---|---|---|---|
+| 키워드·태도 훅 (1장, B) | — | `keyword.mjs`, `keywords.json`, `hooks/hooks.json`, `hooks/critical-stance.md` | 0.1.0 |
+| 현황 (G-2) | `plugin-status` | `status.mjs` | 0.1.0 |
+| 개선 기록 (G-3) | `plugin-issue` | `issue.mjs` | 0.2.0 |
+| 설정 (G-0, G-8) | `plugin-config` | `config.mjs` | 0.3.0 |
+| 개선 반영 (G-3, G-4) | `plugin-apply` | `apply.mjs` | 0.4.0 |
+| 세션 흐름 (A) | `work-start`, `work-end`, `work-resume`, `work-status` | `work.mjs` | 0.5.0 |
+| 적대적 학습 (B) | `learn-adversarial` (+ `reviewer.md`) | `guard.mjs`, `learn.mjs` | 0.6.0 |
+| 학습 (B, F-3) | `learn-class`, `learn-paper`, `learn-source`, `learn-github`, `learn-manage` | `learn.mjs`, `change-apply.mjs`, `md.mjs` | 0.7.0 |
+| 프로젝트 (C, C-2) | `project-create`, `project-define`, `project-build`, `project-verify`, `project-deploy` | `project.mjs`, `templates/project/` | 0.8.0 |
+| 설정 동기화 (E) | `sync` | `sync.mjs`, `change-apply.mjs` | 0.9.0 |
+| 평가 (G-7) | `plugin-eval` | `eval.mjs`, `eval-ablate.mjs`, `evals/` | 0.10.0 |
+| 채팅 모드 (2-1) | 모든 스킬의 `chat.md` | `pack-web.mjs`, `learn.mjs import`, `templates/web/common.md` | 0.11.0 |
+
+아직 없는 것 (설계만 있음):
+
+- 기술 규칙 스킬 `stack-rules` (D)
+- Mermaid 검사 `mermaid-check.mjs`와 저장 후 훅 (H-8)
+- Claude 형식 밖의 어댑터: `.codex-plugin/`, `gemini-extension.json`, `.antigravity-plugin/`, 루트 `hooks.json`, `commands/my/*.toml` (2장, F-1). Codex는 Claude 형식 플러그인을 그대로 읽어 설치된다(2장 "도구별 세부").
+- 다른 도구 평가 `eval-other.mjs` (G-7), 도구별 지원 기록 `support-status.mjs`·`support.json` (G-2)
+- 선택 기능 사용 기록 `usage.json` (G-5). 설정 키 `usage_log`만 있고 기록하는 코드는 아직 없다
+- Mermaid 설정 `mermaid_check`도 키만 있다. 지금은 `project.mjs` 점검이 Mermaid 블록을 찾으면 "Mermaid 미검증"으로 표시한다
+
+설계에 없던 것으로 더한 것: `md.mjs`(마크다운 검사 공용, H-1·H-4), OpenCode 안내(스킬 경로 등록, [OpenCode 가이드](Plugin-사용법/opencode-desktop.md)).
 
 ## 1. 공통 — 키워드 규칙
 
@@ -53,7 +83,7 @@
   - 넣을지 망설여지는 지시는 빼고 시작한다. 빠져서 틀리는 사례가 G-7 평가로 확인되면 그때 넣는다.
 - **스킬 본문에 특정 도구·모델 이름을 쓰지 않는다.**
   - "Read 도구", "`subagent_type`", "Claude의 답변" 대신 "파일 읽기", "하위 에이전트", "AI의 직전 답변"처럼 쓴다.
-  - 도구 전용 앞머리 필드(예: 하위 에이전트의 `disallowed-tools`)는 그 도구에서만 동작한다. 스킬 앞머리에서 도구를 막는 필드가 있는지는 **[미확인]**이다. 그래서 지켜야 할 제약(예: "읽기 전용")은 **본문에도 적는다.**
+  - 도구 전용 앞머리 필드(예: 하위 에이전트의 `disallowed-tools`)는 그 도구에서만 동작한다. 스킬 앞머리에서 도구를 막는 필드가 있는지는 [**미확인**]이다. 그래서 지켜야 할 제약(예: "읽기 전용")은 **본문에도 적는다.**
   - 도구마다 꼭 달라야 하는 절차는 본문에 "도구별 차이" 절 하나로 모은다.
 - **기능이 없는 도구에서는 단계적으로 낮춰 동작하고, 낮춘 것을 표시한다.** 조용히 건너뛰지 않는다.
 
@@ -66,44 +96,203 @@
   | MCP(context7) | 공식 문서 링크(D) | "context7 미사용" |
   | 셸·파일 도구, `scripts/` | 채팅 모드로 동작한다(2-1장). 결과는 화면과 md로만 준다 | "채팅 모드" |
 
-- **도구별 지원 현황**
+### 도구별 지원 현황
 
-  | 항목 | Claude Code | Codex | Gemini CLI | Antigravity CLI (`agy`) |
-  |---|---|---|---|---|
-  | 스킬 `SKILL.md` | 지원 | 지원. 플러그인의 `skills/<이름>/SKILL.md` (문서) | 지원. 확장의 `skills/<이름>/SKILL.md` (문서) | 지원. 플러그인의 `skills/<이름>/SKILL.md`. 앞머리 `name`은 선택, `description`은 필수 (문서, (이 PC `agy plugin validate`)) |
-  | 스킬 직접 호출 | `/my:<이름>` | `$<이름>` (문서) | 없음 → 명령 파일로 `/my:<이름>` (문서, 1장) | `/my:<이름>` (1장, 이 PC `agy changelog`). 문서 예시는 `/<이름>` **[미확인]** |
-  | 하위 에이전트 파일 (my는 쓰지 않음, 아래) | `agents/*.md` | **플러그인에 넣는 방법이 문서에 없다.** 따로 두는 형식은 TOML 한 파일(`.codex/agents/`, `~/.codex/agents/`, 필드 `name`, `description`, `developer_instructions`) (문서) | 확장의 `agents/*.md`(앞머리 `name`, `description`, 선택 `tools`, `model`). "미리보기 기능"이다 (문서) | 플러그인의 `agents/<이름>.md`(앞머리 `name`, `description`, `tools`, `model` 등) (문서, (이 PC `agy plugin validate`)) |
-  | 하위 에이전트 읽기 전용 강제 | `disallowed-tools` | 없음. 부모의 샌드박스를 그대로 쓴다 (문서) | `tools` 목록으로만 제한. 도구 이름이 Claude Code와 다르다 (문서) | `tools` 허용 목록 (문서) |
-  | 프롬프트 제출 훅 (키워드) | `UserPromptSubmit` | `UserPromptSubmit` (문서) | `BeforeAgent`. 입력에 `prompt`가 있다 (문서) | `PreInvocation`. 입력 필드가 `lastUserInput`이다(`prompt` 없음, 이름은 camelCase) (문서). `UserPromptSubmit`은 "모르는 이벤트"로 무시된다 (이 PC `agy plugin validate`) |
-  | 세션 시작 훅 (태도 규칙) | `SessionStart` | `SessionStart` (문서) | `SessionStart` (문서) | `SessionStart` (문서, (이 PC `agy plugin validate`)) |
-  | 컨텍스트 덧붙이기 | `hookSpecificOutput.additionalContext` | 같음 (문서) | 같음 (문서) | `{"injectSteps": [{"systemMessage": {"systemMessage": "…"}}]}`. `systemMessage`는 문자열이 아니라 객체로 한 번 더 감싼다. 이 형식은 대화에 남는다. 그 밖에 `{"userMessage": "…"}`, 사용자에게만 보이는 `{"errorMessage": {"userMessage": "…"}}`가 있다. `additionalContext`는 없다 (이 PC 내장 문서 `agy-customizations/docs/hooks.md`). `PreInvocation`은 `terminationBehavior: "terminate"`로 턴을 멈추고 `errorMessage.userMessage`로 사용자에게만 보이는 말을 낼 수 있다 (이 PC `agy changelog`). `SessionStart`·`PreInvocation` 모두 `systemMessage`가 실제로 모델에 들어간다. `SessionStart`에서 `userMessage`를 넣으면 그 뒤 훅이 받는 `lastUserInput`이 넣은 글로 바뀌므로 `SessionStart`는 `systemMessage`만 쓴다 (이 PC `agy -p` 실험) |
-  | 훅 파일 | `hooks/hooks.json` | 플러그인의 `hooks/hooks.json`. 직접 설치한 플러그인에만 동작한다 (문서). 이 PC의 기능 목록에 `plugin_hooks`가 "removed"로 나온다(`hooks`는 stable). 그래도 플러그인 훅은 동작한다. 세 형식 모두 `SessionStart`·`UserPromptSubmit`에서 불렸다: `.codex-plugin/plugin.json` 안의 `"hooks": {"hooks": {…}}`, `plugin.json`의 `"hooks": "./hooks/hooks.json"`, Claude 형식(`.claude-plugin/plugin.json` + `hooks/hooks.json`). 명령 속 `${PLUGIN_ROOT}`·`${CLAUDE_PLUGIN_ROOT}`가 Windows에서도 플러그인 설치 폴더(`<CODEX_HOME>/plugins/cache/<마켓>/<플러그인>/<버전>`)로 바뀐다. 환경 변수 `PLUGIN_ROOT`·`CLAUDE_PLUGIN_ROOT`·`PLUGIN_DATA`(`plugins/data/<플러그인>-<마켓>`)도 있다. 작업 폴더는 세션 폴더라 `./scripts/…` 같은 상대 경로는 실패한다. 입력 키: `SessionStart`는 `session_id`, `transcript_path`, `cwd`, `hook_event_name`, `model`, `permission_mode`, `source`. `UserPromptSubmit`은 여기에 `turn_id`, `prompt`가 붙고 `source`가 빠진다 (이 PC Codex 앱 내장 CLI 0.169 `codex exec`, 격리한 `CODEX_HOME` 실험). 신뢰한 뒤에는 `SessionStart`의 `hookSpecificOutput.additionalContext`가 세 형식 모두 모델에 들어갔다 (이 PC Codex 앱 내장 CLI 0.169 `codex exec`, 격리한 `CODEX_HOME` 실험). `UserPromptSubmit`의 `additionalContext`와 `Stop` 훅은 **[미확인: 해당 훅을 신뢰한 뒤 확인]** | 확장의 `hooks/hooks.json` (문서). 형식 예시는 문서에 없다 **[미확인]** | 플러그인 **루트**의 `hooks.json`. 형식이 다르다: 최상위에 훅 이름을 두고 그 안에 이벤트를 둔다(`{"my-keyword": {"PreInvocation": [{"type": "command", "command": "…"}]}}`). Claude Code식 `{"hooks": {…}}`는 이름이 `hooks`인 훅 하나로 읽히고, 이벤트 안을 `hooks` 배열로 한 번 더 감싸면 오류로 파일 전체를 건너뛴다 (이 PC `agy plugin validate`). `type: command`만, 기본 30초 (문서). 입력에 `hookEventName`, `cwd`, `lastUserInput`이 있다. Windows에서는 명령을 `cmd.exe`에 적힌 그대로 넘긴다. `hooks.json`·`plugin.json`의 BOM도 읽는다. 세션 안 `/hooks`로 목록을 본다 (이 PC `agy changelog`). `PreInvocation`은 턴마다 한 번이 아니라 모델을 부를 때마다(도구를 쓴 뒤에도) 불린다. 입력의 `invocationNum`이 0, 1, 2…로 늘고 `lastUserInput`은 그대로다 (이 PC `agy -p` 실험) |
-  | 훅 사용 승인 | 플러그인 설치로 사용 | 처음 한 번 `/hooks`에서 신뢰 (H-8). 신뢰하지 않은 플러그인 훅은 조용히 건너뛴다: 같은 설치에서 그냥 실행하면(로그인한 상태에서도) 훅이 하나도 안 불렸고 모델 답에도 훅 글이 없었다. `--dangerously-bypass-hook-trust`를 붙이면 불렸다. 신뢰는 훅 내용 해시로 기록되어 플러그인 내용이 바뀌면 다시 승인해야 한다(실행 파일 메시지 "plugin contents changed; hook approval required") (이 PC Codex 앱 내장 CLI 0.169 `codex exec`, 격리한 `CODEX_HOME` 실험). 대화형 `codex`를 열면 시작 화면에 "Hooks need review"가 뜨고 검토·모두 신뢰·신뢰 없이 계속 중에서 고른다. 신뢰는 `config.toml`의 `[hooks.state."<플러그인>@<마켓>:<훅 파일>:<이벤트>:…"]`에 명령마다 해시로 남는다. 다만 화면은 36개(3개 이벤트)라고 했는데 "모두 신뢰" 뒤 `session_start` 12개만 기록됐다. 나머지 이벤트는 처음 불릴 때 따로 묻는지 **[미확인: 대화형에서 확인]** (이 PC 대화형 `codex` 실험) | 프로젝트 훅은 바뀌면 경고. 확장 훅은 문서에 없다 **[미확인]** | 승인 절차가 문서에 없다. 세션 안 `/hooks`로 목록을 보고, 훅마다 `"enabled": false`로 끈다 (이 PC 내장 문서 `agy-customizations/docs/hooks.md`). 작업 폴더 플러그인(`.agents/plugins/my`)의 훅은 `agy -p`에서 묻지 않고 바로 실행됐다 (이 PC `agy -p` 실험). 대화형 모드에서 묻는지는 **[미확인: 실행해 확인]** |
-  | 플러그인 경로 | `${CLAUDE_PLUGIN_ROOT}` | `PLUGIN_ROOT`. 호환용 `CLAUDE_PLUGIN_ROOT`, `PLUGIN_DATA`도 준다 (문서) | `${extensionPath}`(설정 파일 안에서 치환). 구분자 `${/}` (문서) | `${PLUGIN_ROOT}`, `${PLUGIN_DATA}`(환경 변수로도 준다). 훅은 플러그인 폴더에서 실행되므로 상대 경로 `./scripts/…`를 쓴다. `${PLUGIN_ROOT}`는 예전 판 CLI에서 `validate` 경고가 난다 (문서, (이 PC `agy plugin validate`), (이 PC `agy changelog`)) |
-  | MCP(context7) | 플러그인·`/mcp` | `config.toml`의 `[mcp_servers.<이름>]` 또는 플러그인 루트 `mcp.json` (문서) | `gemini-extension.json`의 `mcpServers` (문서) | 플러그인의 `mcp_config.json`, 전역은 `~/.gemini/config/mcp_config.json`, 또는 `agy mcp add` (문서, 이 PC `--help`) |
-  | 배포 | 마켓플레이스 | `codex plugin marketplace add <로컬 경로 \| owner/repo>` 후 `/plugins`에서 설치 (이 PC `--help`, 문서). Claude Code용 `.claude-plugin/marketplace.json`도 읽는다 (문서) | `gemini extensions install <GitHub URL \| 로컬 경로>`, 개발 중에는 `link` (이 PC `--help`, 문서) | `agy plugin install <로컬 경로 \| GitHub URL \| 플러그인@마켓플레이스>`, 세션 안에서는 `/plugin install`. 확인은 `agy plugin validate <경로> --strict` (이 PC `--help`, 문서). 문서에 나온 마켓플레이스는 공식 것뿐이다 |
+한눈에 보는 요약이다. 근거와 실험 기록은 아래 "도구별 세부"에 둔다. [**미확인**]은 아직 직접 확인하지 않은 것이다.
 
-  - 출처: [Codex subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), [Codex plugins](https://learn.chatgpt.com/docs/plugins), [Codex skills](https://learn.chatgpt.com/docs/build-skills), [Codex hooks](https://learn.chatgpt.com/docs/hooks), [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp), [Gemini CLI hooks](https://geminicli.com/docs/hooks/reference/), [Gemini CLI subagents](https://geminicli.com/docs/core/subagents/), [Gemini CLI skills](https://geminicli.com/docs/cli/skills/), [Gemini CLI extension reference](https://geminicli.com/docs/extensions/reference/), [Gemini CLI custom commands](https://geminicli.com/docs/cli/custom-commands/), [Antigravity plugins](https://antigravity.google/docs/build-plugins/), [Antigravity hooks](https://antigravity.google/docs/hooks), [Antigravity skills](https://antigravity.google/docs/skills), [Gemini CLI → Antigravity CLI 이전](https://antigravity.google/docs/cli/gcli-migration) (2026-11-18 확인)
-  - 이 PC: Codex CLI 0.169.0-alpha.11.1(PATH에 없음, 앱 안의 `codex.exe`), Gemini CLI 0.45.0, Antigravity CLI 1.5.11(`%LOCALAPPDATA%\agy\bin\agy.exe`, 사용자 PATH에 추가함).
-  - (이 PC `agy plugin validate`): 작업용 임시 폴더에 시험 플러그인을 만들어 검사만 했다(설치하지 않음). `.antigravity-plugin/plugin.json` + `skills/` + `agents/` + `rules/AGENTS.md` + 루트 `hooks.json`(위 형식)이 `--strict`로 통과했다. Claude Code 형식(`.claude-plugin/plugin.json`만 있음)은 "그대로는 읽지 않고 `plugin install`이 변환한다"는 오류가 났다.
-  - **Gemini CLI와 Antigravity CLI를 둘 다 지원한다.** Gemini CLI 문서에 "2026-06-18부터 무료·Google One 사용자는 Antigravity CLI로 바뀌었다"는 안내가 있다. API 키로 쓰는 사용자는 Gemini CLI를 계속 쓸 수 있다. 두 CLI는 어댑터만 따로 두고 `skills/`, `scripts/`는 같이 쓴다.
-  - Antigravity CLI는 `agy plugin import gemini`로 Gemini 확장을 가져올 수 있다(명령 파일은 스킬로 바뀐다, 문서). my는 가져오기에 기대지 않고 Antigravity 어댑터를 직접 둔다. 훅 형식이 달라서 그대로 옮겨지지 않기 때문이다. Claude Code 플러그인 가져오기(`agy plugin import claude`)도 `PreToolUse`·`PostToolUse`·`Stop`·시작 `SessionStart`만 바꾸고 `UserPromptSubmit` 같은 것은 경고만 낸다 (이 PC `agy changelog`). 키워드 훅이 빠지므로 쓰지 않는다.
+| 항목 | Claude Code | Codex | Gemini CLI | Antigravity CLI (`agy`) |
+|---|---|---|---|---|
+| 스킬 `SKILL.md` | 지원 | 지원 | 지원 | 지원 |
+| 스킬 직접 호출 | `/my:<이름>` | `$<이름>` | 명령 파일로 `/my:<이름>` | `/my:<이름>` **[미확인]** |
+| 프롬프트 제출 훅 (키워드) | `UserPromptSubmit` | `UserPromptSubmit` | `BeforeAgent` | `PreInvocation` |
+| 세션 시작 훅 (태도 규칙) | `SessionStart` | `SessionStart` | `SessionStart` | `SessionStart` |
+| 컨텍스트 덧붙이기 | `additionalContext` | `additionalContext` | `additionalContext` | `injectSteps` |
+| 훅 파일 | `hooks/hooks.json` | `hooks/hooks.json` | `hooks/hooks.json` | 루트 `hooks.json` (형식 다름) |
+| 훅 사용 승인 | 설치하면 사용 | `/hooks`에서 신뢰 | **[미확인]** | 문서 없음 |
+| 플러그인 경로 | `${CLAUDE_PLUGIN_ROOT}` | `PLUGIN_ROOT` | `${extensionPath}` | `${PLUGIN_ROOT}` |
+| 하위 에이전트 파일 (my는 안 씀) | `agents/*.md` | 플러그인용 방법 없음 | `agents/*.md` | `agents/<이름>.md` |
+| 하위 에이전트 읽기 전용 | `disallowed-tools` | 없음 | `tools` 목록 | `tools` 허용 목록 |
+| MCP(context7) | 플러그인·`/mcp` | `config.toml`·`mcp.json` | `mcpServers` | `mcp_config.json` |
+| 배포 | 마켓플레이스 | 마켓플레이스 | `gemini extensions install` | `agy plugin install` |
 
-- **도구별 처리 방식 (결정 #6)**
-  - **키워드**: `scripts/keyword.mjs` 하나를 모든 도구의 프롬프트 제출 훅에 연결한다.
-    - Claude Code·Codex·Gemini CLI: 입력 `prompt`를 읽고, 입력의 `hook_event_name`을 그대로 돌려주며 `additionalContext`에 안내를 넣는다. Codex `UserPromptSubmit`의 `additionalContext`가 모델에 들어가는지는 **[미확인: 훅을 신뢰한 뒤 확인]**(2장 표).
-    - Antigravity CLI: 입력 `lastUserInput`을 읽고 `injectSteps`로 안내를 넣는다. 스크립트는 입력에 `lastUserInput`이 있는지로 구분한다(도구별로 다른 곳은 이 분기 하나다). `PreInvocation`은 한 턴에 여러 번 불리므로 `invocationNum`이 0일 때만 안내를 넣는다. 새 턴마다 `invocationNum`이 0으로 돌아가는지는 **[미확인: 대화형에서 확인]**이다. 하위 에이전트 대화에서도 불리지만 `lastUserInput`이 비어 있어 키워드가 걸리지 않는다 (이 PC `agy -p` 실험).
-  - **태도 규칙**: `hooks/critical-stance.md`를 모든 도구의 `SessionStart` 훅으로 넣는다(Antigravity CLI는 `injectSteps`의 `systemMessage`. `userMessage`는 쓰지 않는다, 2장 표). Antigravity CLI는 하위 에이전트 대화에서도 `SessionStart`가 불려 검토자에게도 태도 규칙이 들어간다 (이 PC `agy -p` 실험). 훅이 동작하지 않으면 "태도 훅 미적용"으로 표시하고 `AGENTS.md`/`GEMINI.md`에 넣는 방법을 안내한다.
-  - **하위 에이전트(검토자)**: 에이전트 파일(`agents/`)을 두지 않는다. 검토자 지침은 스킬 폴더 안의 참고 파일 `skills/learn-adversarial/reviewer.md`로 둔다(B).
-    - 스킬이 "범용 하위 에이전트를 만들고 `reviewer.md` 내용과 브리프를 지침으로 주라"고 지시한다. 에이전트 파일 형식(Claude Code `.md`, Codex TOML, Gemini·Antigravity `.md`)이 도구마다 달라도 상관없다. Claude Code·Codex·Gemini CLI는 지시로 하위 에이전트를 만들 수 있다(문서). Antigravity CLI는 `define_subagent`(즉석 정의)·`invoke_subagent` 도구가 있어 지시로 만들 수 있는 것으로 보인다 (이 PC `agy changelog`). 지시하자 모델이 `define_subagent`로 정의하고 `invoke_subagent`로 실행해 답을 받아 왔다. 하위 에이전트는 별도 대화(다른 `conversationId`)로 돈다 (이 PC `agy -p` 실험).
-    - 분리 검토는 호스트가 쓰기 가능한 도구와 외부 전송 경로를 차단하고 부모 대화 비상속을 확인한 경우에만 실행한다. 별도 대화 ID나 본문 지시는 이 조건의 증거로 쓰지 않는다. 권한 검증에 실패한 범용 에이전트는 띄우지 않는다.
-    - 도구별 충족 여부: 위 실험은 하위 에이전트를 지시로 만들 수 있다는 것만 보여 준다. 네 도구 모두 호스트가 쓰기·외부 전송을 막는지와 부모 대화 비상속은 **[미확인]**이다. 확인 전에는 모든 도구에서 아래의 "분리 검토 아님" 경로로 동작한다. 확인 결과는 G-2 현황에 도구별로 표시한다.
-    - 조건을 충족하지 못하면 같은 대화에서 읽기 작업만 수행하고 "분리 검토 아님"을 표시한다. C-1에서 독립 검토가 요구되면 이 결과는 예비 검토로 기록하고 독립 검토 항목은 미충족으로 남긴다.
-  - **MCP(context7)**: my에 넣지 않는다(D). 도구별 연결 명령은 안내만 한다.
-  - **구현 때 확인할 것**: Codex `UserPromptSubmit`·`Stop` 훅의 신뢰 절차와 동작(훅 실행·경로 변수·신뢰 필요·`SessionStart`의 `additionalContext` 전달은 실험으로 확인함), Codex 대화형에서 `$my:<이름>` 호출, Gemini 확장 `hooks/hooks.json` 형식과 Windows 명령 처리, Antigravity 대화형 모드의 훅 승인(`injectSteps` 전달, `PreInvocation` 호출 횟수, 지시로 하위 에이전트 만들기, `-p`의 훅 승인은 실험으로 확인함), 각 도구에서 스킬이 SKILL.md 기준 상대 경로로 `scripts/`·참고 파일을 읽을 수 있는지, Antigravity 대화형의 `/my:<이름>` 호출, 스킬 앞머리로 도구(편집 등)를 막는 필드가 도구별로 있는지(2장 "스킬 본문에 특정 도구·모델 이름을 쓰지 않는다", `learn-adversarial`), Gemini CLI 데이터 폴더 변수(F-1), Antigravity CLI 업데이트 전용 명령(G-3), context7을 플러그인과 직접 연결로 함께 설치했을 때 어느 쪽이 쓰이는지(G-2), 도구별 분리 검토 조건(쓰기·외부 전송 차단, 부모 대화 비상속) 충족 여부, 도구별 선택지 질문 도구의 형식과 기본 활성 여부(Codex `request_user_input`, Gemini CLI `ask_user`, Antigravity CLI `ask_question`, G-8), 프로젝트 원격의 공개 여부 확인 방법(F-3). 모두 실제로 설치하거나 실행해야 알 수 있다. 설치는 사용자가 한다.
+### 도구별 세부
+
+근거 표기: (문서)는 공식 문서, (이 PC …)는 이 PC에서 실행해 본 결과다. 출처 목록과 확인한 버전은 이 절 끝에 둔다.
+
+#### Claude Code
+
+- 위 표 그대로다. 문서로 확인했고, 이 저장소가 실제로 쓰는 형식이다(0-1).
+
+#### Codex
+
+**스킬과 호출**
+
+- 플러그인의 `skills/<이름>/SKILL.md`를 읽는다 (문서).
+- 직접 호출은 `$<이름>` 또는 `/skills`에서 고르기다 (문서). 플러그인 스킬의 이름과 대화형 확인 상태는 1장 표에 있다.
+
+**하위 에이전트**
+
+- 플러그인에 넣는 방법이 문서에 없다. 따로 두는 형식은 TOML 한 파일이다: `.codex/agents/` 또는 `~/.codex/agents/`, 필드 `name`, `description`, `developer_instructions` (문서).
+- 읽기 전용을 강제하는 필드가 없다. 부모의 샌드박스를 그대로 쓴다 (문서).
+
+**훅 파일과 실행** (이 PC Codex 앱 내장 CLI 0.169 `codex exec`, 격리한 `CODEX_HOME` 실험)
+
+- 플러그인의 `hooks/hooks.json`이다. 직접 설치한 플러그인에만 동작한다 (문서).
+- 기능 목록에 `plugin_hooks`가 "removed"로 나온다(`hooks`는 stable). 그래도 플러그인 훅은 동작한다.
+- 다음 세 형식 모두 `SessionStart`·`UserPromptSubmit`에서 불렸다.
+  - `.codex-plugin/plugin.json` 안의 `"hooks": {"hooks": {…}}`
+  - `plugin.json`의 `"hooks": "./hooks/hooks.json"`
+  - Claude 형식(`.claude-plugin/plugin.json` + `hooks/hooks.json`)
+- 명령 속 `${PLUGIN_ROOT}`·`${CLAUDE_PLUGIN_ROOT}`가 Windows에서도 설치 폴더(`<CODEX_HOME>/plugins/cache/<마켓>/<플러그인>/<버전>`)로 바뀐다.
+- 환경 변수 `PLUGIN_ROOT`·`CLAUDE_PLUGIN_ROOT`·`PLUGIN_DATA`(`plugins/data/<플러그인>-<마켓>`)도 있다(문서에도 있다).
+- 작업 폴더는 세션 폴더라 `./scripts/…` 같은 상대 경로는 실패한다.
+- 입력 키
+  - `SessionStart`: `session_id`, `transcript_path`, `cwd`, `hook_event_name`, `model`, `permission_mode`, `source`
+  - `UserPromptSubmit`: 위에 `turn_id`, `prompt`가 붙고 `source`가 빠진다
+- 신뢰한 뒤에는 `SessionStart`의 `hookSpecificOutput.additionalContext`가 세 형식 모두 모델에 들어갔다.
+- `UserPromptSubmit`의 `additionalContext`와 `Stop` 훅은 **[미확인: 해당 훅을 신뢰한 뒤 확인]**.
+
+**훅 사용 승인**
+
+- 처음 한 번 `/hooks`에서 신뢰한다 (H-8).
+- 신뢰하지 않은 플러그인 훅은 조용히 건너뛴다. 같은 설치에서 그냥 실행하면(로그인한 상태에서도) 훅이 하나도 안 불렸고 모델 답에도 훅 글이 없었다. `--dangerously-bypass-hook-trust`를 붙이면 불렸다 (`codex exec` 실험).
+- 신뢰는 훅 내용 해시로 기록된다. 플러그인 내용이 바뀌면 다시 승인해야 한다. 실행 파일 메시지: "plugin contents changed; hook approval required" (같은 실험).
+- 대화형 `codex`를 열면 시작 화면에 "Hooks need review"가 뜨고 검토·모두 신뢰·신뢰 없이 계속 중에서 고른다. 신뢰는 `config.toml`의 `[hooks.state."<플러그인>@<마켓>:<훅 파일>:<이벤트>:…"]`에 명령마다 해시로 남는다 (이 PC 대화형 `codex` 실험).
+- 화면은 36개(3개 이벤트)라고 했는데 "모두 신뢰" 뒤 `session_start` 12개만 기록됐다. 나머지 이벤트를 처음 불릴 때 따로 묻는지는 **[미확인: 대화형에서 확인]**.
+
+**MCP와 배포**
+
+- MCP: `config.toml`의 `[mcp_servers.<이름>]` 또는 플러그인 루트 `mcp.json` (문서).
+- 배포: `codex plugin marketplace add <로컬 경로 | owner/repo>` 후 `/plugins`에서 설치한다 (이 PC `--help`, 문서). Claude Code용 `.claude-plugin/marketplace.json`도 읽는다 (문서).
+
+#### Gemini CLI
+
+- 스킬: 확장의 `skills/<이름>/SKILL.md` (문서).
+- 직접 호출: 스킬을 이름으로 부르는 방법이 문서에 없다. 명령 파일 `commands/my/<이름>.toml`로 `/my:<이름>`을 만든다 (1장).
+- 하위 에이전트: 확장의 `agents/*.md`(앞머리 `name`, `description`, 선택 `tools`, `model`). "미리보기 기능"이다. 읽기 전용은 `tools` 목록으로만 제한하고, 도구 이름이 Claude Code와 다르다 (문서).
+- 훅 이벤트: 키워드는 `BeforeAgent`(입력에 `prompt`가 있다), 태도 규칙은 `SessionStart`, 컨텍스트는 `hookSpecificOutput.additionalContext` (문서).
+- 훅 파일: 확장의 `hooks/hooks.json` (문서). 형식 예시는 문서에 없다 **[미확인]**.
+- 훅 사용 승인: 프로젝트 훅은 바뀌면 경고한다. 확장 훅은 문서에 없다 **[미확인]**.
+- 경로: `${extensionPath}`(설정 파일 안에서 치환), 구분자 `${/}` (문서).
+- MCP: `gemini-extension.json`의 `mcpServers` (문서).
+- 배포: `gemini extensions install <GitHub URL | 로컬 경로>`, 개발 중에는 `link` (이 PC `--help`, 문서).
+
+#### Antigravity CLI (`agy`)
+
+**스킬과 호출**
+
+- 플러그인의 `skills/<이름>/SKILL.md`. 앞머리 `name`은 선택, `description`은 필수 (문서, 이 PC `agy plugin validate`).
+- 직접 호출은 `/my:<이름>` (1장, 이 PC `agy changelog`). 문서 예시는 `/<이름>`이다 **[미확인]**.
+
+**하위 에이전트**
+
+- 플러그인의 `agents/<이름>.md`(앞머리 `name`, `description`, `tools`, `model` 등). 읽기 전용은 `tools` 허용 목록으로 한다 (문서, 이 PC `agy plugin validate`).
+
+**훅 이벤트와 출력**
+
+- 키워드는 `PreInvocation`이다. 입력 필드는 `lastUserInput`이다(`prompt` 없음, 이름은 camelCase) (문서). `UserPromptSubmit`은 "모르는 이벤트"로 무시된다 (이 PC `agy plugin validate`).
+- `PreInvocation`은 턴마다 한 번이 아니라 모델을 부를 때마다(도구를 쓴 뒤에도) 불린다. 입력의 `invocationNum`이 0, 1, 2…로 늘고 `lastUserInput`은 그대로다 (이 PC `agy -p` 실험).
+- `additionalContext`는 없다. 대신 `injectSteps`를 쓴다 (이 PC 내장 문서 `agy-customizations/docs/hooks.md`).
+  - `{"injectSteps": [{"systemMessage": {"systemMessage": "…"}}]}`: `systemMessage`는 문자열이 아니라 객체로 한 번 더 감싼다. 대화에 남는다.
+  - `{"userMessage": "…"}`
+  - `{"errorMessage": {"userMessage": "…"}}`: 사용자에게만 보인다.
+- `PreInvocation`은 `terminationBehavior: "terminate"`로 턴을 멈추고 `errorMessage.userMessage`로 사용자에게만 보이는 말을 낼 수 있다 (이 PC `agy changelog`).
+- `SessionStart`·`PreInvocation` 모두 `systemMessage`가 실제로 모델에 들어간다. `SessionStart`에서 `userMessage`를 넣으면 그 뒤 훅이 받는 `lastUserInput`이 넣은 글로 바뀐다. 그래서 `SessionStart`는 `systemMessage`만 쓴다 (이 PC `agy -p` 실험).
+
+**훅 파일**
+
+- 플러그인 **루트**의 `hooks.json`이다. 최상위에 훅 이름을 두고 그 안에 이벤트를 둔다: `{"my-keyword": {"PreInvocation": [{"type": "command", "command": "…"}]}}`.
+- Claude Code식 `{"hooks": {…}}`는 이름이 `hooks`인 훅 하나로 읽힌다. 이벤트 안을 `hooks` 배열로 한 번 더 감싸면 오류로 파일 전체를 건너뛴다 (이 PC `agy plugin validate`).
+- `type: command`만 되고 기본 시간 제한은 30초다 (문서). 입력에 `hookEventName`, `cwd`, `lastUserInput`이 있다.
+- Windows에서는 명령을 `cmd.exe`에 적힌 그대로 넘긴다. `hooks.json`·`plugin.json`의 BOM도 읽는다. 세션 안 `/hooks`로 목록을 본다 (이 PC `agy changelog`).
+
+**훅 사용 승인**
+
+- 승인 절차가 문서에 없다. 세션 안 `/hooks`로 목록을 보고, 훅마다 `"enabled": false`로 끈다 (이 PC 내장 문서 `agy-customizations/docs/hooks.md`).
+- 작업 폴더 플러그인(`.agents/plugins/my`)의 훅은 `agy -p`에서 묻지 않고 바로 실행됐다 (이 PC `agy -p` 실험). 대화형 모드에서 묻는지는 **[미확인: 실행해 확인]**.
+
+**경로, MCP, 배포**
+
+- 경로: `${PLUGIN_ROOT}`, `${PLUGIN_DATA}`(환경 변수로도 준다). 훅은 플러그인 폴더에서 실행되므로 상대 경로 `./scripts/…`를 쓴다. `${PLUGIN_ROOT}`는 예전 판 CLI에서 `validate` 경고가 난다 (문서, 이 PC `agy plugin validate`, 이 PC `agy changelog`).
+- MCP: 플러그인의 `mcp_config.json`, 전역은 `~/.gemini/config/mcp_config.json`, 또는 `agy mcp add` (문서, 이 PC `--help`).
+- 배포: `agy plugin install <로컬 경로 | GitHub URL | 플러그인@마켓플레이스>`, 세션 안에서는 `/plugin install`. 확인은 `agy plugin validate <경로> --strict` (이 PC `--help`, 문서). 문서에 나온 마켓플레이스는 공식 것뿐이다.
+- 시험 플러그인 검사 (이 PC `agy plugin validate`, 작업용 임시 폴더, 설치하지 않음)
+  - `.antigravity-plugin/plugin.json` + `skills/` + `agents/` + `rules/AGENTS.md` + 루트 `hooks.json`(위 형식)이 `--strict`로 통과했다.
+  - Claude Code 형식(`.claude-plugin/plugin.json`만 있음)은 "그대로는 읽지 않고 `plugin install`이 변환한다"는 오류가 났다.
+
+**Gemini CLI와의 관계**
+
+- **Gemini CLI와 Antigravity CLI를 둘 다 지원한다.** Gemini CLI 문서에 "2026-06-18부터 무료·Google One 사용자는 Antigravity CLI로 바뀌었다"는 안내가 있다. API 키로 쓰는 사용자는 Gemini CLI를 계속 쓸 수 있다.
+- 두 CLI는 어댑터만 따로 두고 `skills/`, `scripts/`는 같이 쓴다.
+- `agy plugin import gemini`로 Gemini 확장을 가져올 수 있다(명령 파일은 스킬로 바뀐다, 문서). my는 가져오기에 기대지 않고 Antigravity 어댑터를 직접 둔다. 훅 형식이 달라서 그대로 옮겨지지 않기 때문이다.
+- Claude Code 플러그인 가져오기(`agy plugin import claude`)도 `PreToolUse`·`PostToolUse`·`Stop`·시작 `SessionStart`만 바꾸고 `UserPromptSubmit` 같은 것은 경고만 낸다 (이 PC `agy changelog`). 키워드 훅이 빠지므로 쓰지 않는다.
+
+#### 확인 환경과 출처
+
+- 이 PC: Codex CLI 0.169.0-alpha.11.1(PATH에 없음, 앱 안의 `codex.exe`), Gemini CLI 0.45.0, Antigravity CLI 1.5.11(`%LOCALAPPDATA%\agy\bin\agy.exe`, 사용자 PATH에 추가함).
+- 출처 (2026-11-18 확인)
+  - Codex: [subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), [plugins](https://learn.chatgpt.com/docs/plugins), [skills](https://learn.chatgpt.com/docs/build-skills), [hooks](https://learn.chatgpt.com/docs/hooks), [MCP](https://learn.chatgpt.com/docs/extend/mcp)
+  - Gemini CLI: [hooks](https://geminicli.com/docs/hooks/reference/), [subagents](https://geminicli.com/docs/core/subagents/), [skills](https://geminicli.com/docs/cli/skills/), [extension reference](https://geminicli.com/docs/extensions/reference/), [custom commands](https://geminicli.com/docs/cli/custom-commands/)
+  - Antigravity: [plugins](https://antigravity.google/docs/build-plugins/), [hooks](https://antigravity.google/docs/hooks), [skills](https://antigravity.google/docs/skills), [Gemini CLI → Antigravity CLI 이전](https://antigravity.google/docs/cli/gcli-migration)
+
+### 도구별 처리 방식 (결정 #6)
+
+**키워드**: `scripts/keyword.mjs` 하나를 모든 도구의 프롬프트 제출 훅에 연결한다.
+
+- Claude Code·Codex·Gemini CLI: 입력 `prompt`를 읽고, 입력의 `hook_event_name`을 그대로 돌려주며 `additionalContext`에 안내를 넣는다.
+  - Codex `UserPromptSubmit`의 `additionalContext`가 모델에 들어가는지는 **[미확인: 훅을 신뢰한 뒤 확인]**.
+- Antigravity CLI: 입력 `lastUserInput`을 읽고 `injectSteps`로 안내를 넣는다.
+  - 스크립트는 입력에 `lastUserInput`이 있는지로 구분한다. 도구별로 다른 곳은 이 분기 하나다.
+  - `PreInvocation`은 한 턴에 여러 번 불리므로 `invocationNum`이 0일 때만 안내를 넣는다. 새 턴마다 0으로 돌아가는지는 **[미확인: 대화형에서 확인]**.
+  - 하위 에이전트 대화에서도 불리지만 `lastUserInput`이 비어 있어 키워드가 걸리지 않는다 (이 PC `agy -p` 실험).
+
+**태도 규칙**: `hooks/critical-stance.md`를 모든 도구의 `SessionStart` 훅으로 넣는다.
+
+- Antigravity CLI는 `injectSteps`의 `systemMessage`로 넣고 `userMessage`는 쓰지 않는다(위 "도구별 세부").
+- Antigravity CLI는 하위 에이전트 대화에서도 `SessionStart`가 불려 검토자에게도 태도 규칙이 들어간다 (이 PC `agy -p` 실험).
+- 훅이 동작하지 않으면 "태도 훅 미적용"으로 표시하고 `AGENTS.md`/`GEMINI.md`에 넣는 방법을 안내한다.
+
+**하위 에이전트(검토자)**: 에이전트 파일(`agents/`)을 두지 않는다. 검토자 지침은 스킬 폴더 안의 참고 파일 `skills/learn-adversarial/reviewer.md`로 둔다(B).
+
+- 스킬이 "범용 하위 에이전트를 만들고 `reviewer.md` 내용과 브리프를 지침으로 주라"고 지시한다. 에이전트 파일 형식(Claude Code `.md`, Codex TOML, Gemini·Antigravity `.md`)이 도구마다 달라도 상관없다.
+- Claude Code·Codex·Gemini CLI는 지시로 하위 에이전트를 만들 수 있다(문서).
+- Antigravity CLI는 `define_subagent`(즉석 정의)·`invoke_subagent` 도구가 있다 (이 PC `agy changelog`). 지시하자 모델이 `define_subagent`로 정의하고 `invoke_subagent`로 실행해 답을 받아 왔다. 하위 에이전트는 별도 대화(다른 `conversationId`)로 돈다 (이 PC `agy -p` 실험).
+- 분리 검토는 호스트가 쓰기 가능한 도구와 외부 전송 경로를 차단하고 부모 대화 비상속을 확인한 경우에만 실행한다. 별도 대화 ID나 본문 지시는 이 조건의 증거로 쓰지 않는다. 권한 검증에 실패한 범용 에이전트는 띄우지 않는다.
+- 도구별 충족 여부: 위 실험은 하위 에이전트를 지시로 만들 수 있다는 것만 보여 준다. 네 도구 모두 호스트가 쓰기·외부 전송을 막는지와 부모 대화 비상속은 [**미확인**]이다. 확인 전에는 모든 도구에서 "분리 검토 아님" 경로로 동작한다. 확인 결과는 G-2 현황에 도구별로 표시한다.
+- 조건을 충족하지 못하면 같은 대화에서 읽기 작업만 수행하고 "분리 검토 아님"을 표시한다. C-1에서 독립 검토가 요구되면 이 결과는 예비 검토로 기록하고 독립 검토 항목은 미충족으로 남긴다.
+
+**MCP(context7)**: my에 넣지 않는다(D). 도구별 연결 명령은 안내만 한다.
+
+### 구현 때 확인할 것
+
+모두 실제로 설치하거나 실행해야 알 수 있다. 설치는 사용자가 한다.
+
+- Codex
+  - `UserPromptSubmit`·`Stop` 훅의 신뢰 절차와 동작. 훅 실행·경로 변수·신뢰 필요·`SessionStart`의 `additionalContext` 전달은 실험으로 확인했다.
+  - 대화형에서 `$my:<이름>` 호출
+- Gemini CLI
+  - 확장 `hooks/hooks.json` 형식과 Windows 명령 처리
+  - 데이터 폴더 변수 (F-1)
+- Antigravity CLI
+  - 대화형 모드의 훅 승인. `injectSteps` 전달, `PreInvocation` 호출 횟수, 지시로 하위 에이전트 만들기, `-p`의 훅 승인은 실험으로 확인했다.
+  - 대화형의 `/my:<이름>` 호출
+  - 업데이트 전용 명령 (G-3)
+- 모든 도구
+  - 스킬이 SKILL.md 기준 상대 경로로 `scripts/`·참고 파일을 읽을 수 있는지
+  - 스킬 앞머리로 도구(편집 등)를 막는 필드가 있는지 (2장 "스킬 본문에 특정 도구·모델 이름을 쓰지 않는다", `learn-adversarial`)
+  - 분리 검토 조건(쓰기·외부 전송 차단, 부모 대화 비상속) 충족 여부
+  - 선택지 질문 도구의 형식과 기본 활성 여부: Codex `request_user_input`, Gemini CLI `ask_user`, Antigravity CLI `ask_question` (G-8)
+- 그 밖
+  - context7을 플러그인과 직접 연결로 함께 설치했을 때 어느 쪽이 쓰이는지 (G-2)
+  - 프로젝트 원격의 공개 여부 확인 방법 (F-3)
+
+### 평가와 비대화형 실행
+
 - **평가(G-7)는 도구마다 따로 한다.** 한 도구에서 통과해도 다른 도구에서 통과한다고 보지 않는다. 시험하지 않은 도구는 "미검증"으로 둔다.
   - **초기 지원 판정**: 실제 설치한 각 도구의 대화형 세션에서 직접 호출 → 스킬 로드 관찰 → 검토 결과를 확인한다. 키워드와 훅은 별도로 최초 설치·권한 미승인·승인·업데이트 후 재승인 경로를 시험한다. G-2 현황에서 직접 호출과 훅 상태를 각각 표시한다. 상태를 조회할 수 없는 도구는 "미확인"으로 표시한다.
-- **승인이 필요한 쓰기와 비대화형 실행**: 사람 승인이 필요한 단계(E 적용, F-3 통합·이동, G-3 반영, G-7 평가 실행, G-8 저장, C 생성기 실행 등)를 비대화형 실행(`claude -p`, `codex exec`, `gemini -p`, `agy -p`)에서 만나면 쓰거나 실행하지 않는다. 계획(바꿀 파일, diff, 실행할 명령)만 출력하고 "승인 대기 — 대화형에서 다시 실행"을 표시한 뒤 끝낸다. 선택지 질문이 필요한 단계도 같다. 질문 없이 기본값으로 진행하지 않는다.
+- **승인이 필요한 쓰기와 비대화형 실행**: 사람 승인이 필요한 단계(E 적용, F-3 통합·이동, G-3 반영, G-7 평가 실행, G-8 저장, C 생성기 실행 등)를 비대화형 실행(`claude -p`, `codex exec`, `gemini -p`, `agy -p`)에서 만나면 쓰거나 실행하지 않는다.
+  - 계획(바꿀 파일, diff, 실행할 명령)만 출력하고 "승인 대기 — 대화형에서 다시 실행"을 표시한 뒤 끝낸다.
+  - 선택지 질문이 필요한 단계도 같다. 질문 없이 기본값으로 진행하지 않는다.
 
 ## 2-1. 채팅 모드 (웹 채팅창)
 
@@ -164,7 +353,7 @@ ChatGPT·Claude·Gemini 웹 채팅창에서도 같은 키워드를 쓴다. 파�
 
 - 인계 md와 학습 노트 md는 로컬과 같은 양식이라 **웹 ↔ 로컬로 오갈 수 있다.** 웹에서 만든 인계 md를 로컬 `docs/handoff/`에 두면 `마이 작업 이어서`가 읽는다.
 - 웹에서 만든 학습 노트(번호 "미정")는 로컬에서 `learn.mjs import <md>`로 가져온다. 스크립트가 번호를 매기고 목록·링크를 고친다(B).
-- Claude·ChatGPT의 프로젝트 기능에 인계 md를 올려 두면 새 창마다 첨부하지 않아도 되는지는 **[미확인]**이다.
+- Claude·ChatGPT의 프로젝트 기능에 인계 md를 올려 두면 새 창마다 첨부하지 않아도 되는지는 [**미확인**]이다.
 
 ### 2-1-6. 웹 패키지
 
@@ -218,7 +407,7 @@ ChatGPT·Claude·Gemini 웹 채팅창에서도 같은 키워드를 쓴다. 파�
 
   | 파일 | 역할 |
   |---|---|
-  | `skills/learn-adversarial/SKILL.md` | 대상 정하기 → 규모 정하기(경량: 직접 확인해 3줄 / 표준: 하위 에이전트에 위임) → 결과를 바꾸지 않고 전달. 편집하지 않는다고 본문에 적는다(2장 범용 원칙). 스킬 앞머리로 편집 도구를 막을 수 있는지는 **[미확인]**이라 본문 지시와 G-7 평가로 지킨다. 실행 전에 대상 파일의 해시를 기록하고 끝난 뒤 다시 비교한다. 달라진 파일이 있으면 "편집 금지 위반"으로 보고하고, 되돌릴 diff를 보여 준 뒤 사용자 승인으로 되돌린다 |
+  | `skills/learn-adversarial/SKILL.md` | 대상 정하기 → 규모 정하기(경량: 직접 확인해 3줄 / 표준: 하위 에이전트에 위임) → 결과를 바꾸지 않고 전달. 편집하지 않는다고 본문에 적는다(2장 범용 원칙). 스킬 앞머리로 편집 도구를 막을 수 있는지는 [**미확인**]이라 본문 지시와 G-7 평가로 지킨다. 실행 전에 대상 파일의 해시를 기록하고 끝난 뒤 다시 비교한다. 달라진 파일이 있으면 "편집 금지 위반"으로 보고하고, 되돌릴 diff를 보여 준 뒤 사용자 승인으로 되돌린다 |
   | `skills/learn-adversarial/reviewer.md` | 검토자 지침(스킬의 참고 파일). 표준 규모에서 스킬이 범용 하위 에이전트를 만들고 이 내용과 브리프를 준다. 하위 에이전트는 대화 기록 없이 브리프만 받는다. 브리프에는 원문, 주장 목록, 근거 위치를 넣고 결론 암시는 넣지 않는다. 파일을 만들거나 고치지 않는다고 적는다 |
   | `hooks/critical-stance.md` | 세션 시작 훅이 읽어 넣는 태도 규칙(아래). 마지막 줄은 `마이 적대적 학습`을 가리킨다 |
   | `evals/` | 틀린 전제를 기각하는지, 키워드로 불리는지, 참인 주장에 결함을 지어내지 않는지 확인하는 사례. 질문은 "마이 적대적 학습 …"으로 시작한다(G-7) |
@@ -436,38 +625,55 @@ templates/project/
 
 **배포: 새 `my` 마켓플레이스** (확정). 저장소 하나가 마켓플레이스 역할을 하고, 그 안에 `my` 플러그인을 둔다.
 
+`(예정)`이 붙은 것은 아직 없다(0-1).
+
 ```
-D:\_GIT_PWA\my\                  ← my 마켓플레이스 (git 저장소)
+my/                                  ← my 마켓플레이스 (git 저장소)
 ├─ .claude-plugin/marketplace.json   마켓플레이스 정의 (플러그인 목록)
-├─ docs/                             기획 문서 (이 파일)
+├─ docs/                             기획 문서(이 파일), 사용 안내(Plugin-사용법/)
+├─ dist/web/                         웹 패키지 출력 (pack-web.mjs가 만든다, 커밋 제외)
 └─ plugins/
    └─ my/                            ← my 플러그인 원본
-      ├─ .claude-plugin/plugin.json   Claude Code 어댑터
-      ├─ .codex-plugin/plugin.json    Codex 어댑터 (필드는 구현 때 문서로 확인)
-      ├─ gemini-extension.json        Gemini CLI 어댑터 (필드는 구현 때 문서로 확인)
-      ├─ .antigravity-plugin/plugin.json  Antigravity CLI 어댑터 (`name`만 필수)
-      ├─ hooks.json                   Antigravity CLI 전용 훅 (루트에 둔다. 위치·형식이 다른 도구와 다르다, 2장)
-      ├─ commands/my/<이름>.toml      Gemini CLI 전용 직접 호출 명령 (2장. 스킬을 부르는 한 줄)
+      ├─ .claude-plugin/plugin.json   Claude Code 어댑터 (Codex도 이 형식을 읽는다). 버전은 여기 한 곳
+      ├─ .codex-plugin/plugin.json    Codex 전용 어댑터 (예정)
+      ├─ gemini-extension.json        Gemini CLI 어댑터 (예정)
+      ├─ .antigravity-plugin/plugin.json  Antigravity CLI 어댑터 (예정)
+      ├─ hooks.json                   Antigravity CLI 전용 훅. 루트에 두고 형식이 다르다, 2장 (예정)
+      ├─ commands/my/<이름>.toml      Gemini CLI 직접 호출 명령, 1장 (예정)
       ├─ CHANGELOG.md                 버전별 변경 내역 (G-4)
-      ├─ skills/        공통 원본 (SKILL.md, 2장 범용 원칙)
-      │  ├─ work-start/ work-end/ work-resume/ work-status/        (A)
-      │  ├─ learn-class/ learn-paper/ learn-source/ learn-github/ learn-adversarial/  (B)
-      │  ├─ learn-manage/                                          (B 관리)
-      │  ├─ project-create/ … project-deploy/                      (C)
-      │  ├─ stack-rules/SKILL.md + references/<기술>.md            (D)
-      │  ├─ sync/                                                  (E)
+      ├─ skills/<이름>/               SKILL.md(공통 원본) + chat.md(채팅 모드, 2-1-3)
+      │  ├─ work-start/ work-end/ work-resume/ work-status/                   (A)
+      │  ├─ learn-class/ learn-paper/ learn-source/ learn-github/             (B)
+      │  ├─ learn-adversarial/  + reviewer.md(검토자 지침)                      (B)
+      │  ├─ learn-manage/                                                     (B 관리)
+      │  ├─ project-create/ project-define/ project-build/ project-verify/ project-deploy/  (C)
+      │  ├─ stack-rules/ + references/<기술>.md                               (D, 예정)
+      │  ├─ sync/                                                             (E)
       │  └─ plugin-status/ plugin-issue/ plugin-apply/ plugin-eval/ plugin-config/  (G)
-      ├─ hooks/         hooks.json(Claude Code·Codex·Gemini CLI용, 도구별 이벤트 이름) + critical-stance.md(B 태도 훅)
-      ├─ scripts/       훅과 스킬이 함께 쓰는 스크립트 (도구 공통)
-      │                 keyword.mjs, keywords.json(키워드 → 스킬 대응표 원본, 1장), config.mjs(설정값 읽기·출처·검증·저장, G-0·G-8),
-      │                 mermaid-check.mjs(H-8), eval-ablate.mjs·eval-other.mjs(G-7),
-      │                 change-apply.mjs(여러 파일 변경의 승인 상태 대조·잠금·백업·재개·복구, F-3·E),
-      │                 support-status.mjs(도구별 직접 호출 검증 결과·훅 상태·분리 검토 조건 기록과 조회, 2장·G-2)
+      ├─ hooks/
+      │  ├─ hooks.json            UserPromptSubmit(키워드)·SessionStart(태도 규칙)
+      │  └─ critical-stance.md    태도 규칙 (B)
+      ├─ scripts/                 훅과 스킬이 함께 쓰는 스크립트 (도구 공통)
+      │  ├─ keyword.mjs, keywords.json   키워드 훅, 키워드 → 스킬 대응표 원본 (1장)
+      │  ├─ config.mjs            설정 읽기·출처·검증·저장 (G-0, G-8)
+      │  ├─ status.mjs            현황 (G-2)
+      │  ├─ issue.mjs, apply.mjs  개선 기록, 반영·버전 올림 (G-3, G-4)
+      │  ├─ work.mjs              프로젝트 상황, 인계 문서 (A)
+      │  ├─ guard.mjs             편집 금지 확인 (B 적대적 학습)
+      │  ├─ learn.mjs             학습 루트·노트·목차·점검·통합, 웹 노트 가져오기 import (B, F-3, 2-1)
+      │  ├─ md.mjs                마크다운 검사 공용 (H-1, H-4)
+      │  ├─ project.mjs           템플릿 뼈대, 명세, 추적표, 문서 점검 (C)
+      │  ├─ sync.mjs              규칙 파일 참조·스킬 동기화 (E)
+      │  ├─ change-apply.mjs      여러 파일 변경의 승인 대조·잠금·백업·재개·복구 (F-3, E)
+      │  ├─ eval.mjs, eval-ablate.mjs   정적 점검·사례·비용·기록, 지시 뺀 복사본 (G-7)
+      │  ├─ pack-web.mjs          웹 패키지 (2-1-6)
+      │  ├─ mermaid-check.mjs, eval-other.mjs, support-status.mjs   (H-8, G-7, G-2, 예정)
+      │  └─ test/                 node --test 시험
       ├─ evals/         평가 사례 (G-7, 적대적 학습 사례 포함)
-      └─ templates/     프로젝트 뼈대(project/common, project/stacks, C-2), 명세, 인계 문서, 학습 노트 양식
+      └─ templates/     인계 문서, 학습 노트·주제 양식, 프로젝트 뼈대(project/common, project/stacks, C-2), 웹 공통 규칙(web/common.md)
 ```
 
-- **데이터 폴더** (플러그인 업데이트로 지워지지 않는 곳. Claude Code `${CLAUDE_PLUGIN_DATA}`, Codex·Antigravity `PLUGIN_DATA`. Gemini CLI는 데이터 폴더 변수가 **[미확인]**이라 확인 전에는 `~/.my/data/`를 쓴다): `improvements/IMP-<UUID>.md`(항목별 파일, G-3), `eval-history.md`(G-7), `usage.json`(G-5), `support.json`(G-2), Mermaid 설치 확인 상태(H-8), 평가용 복사본(G-7).
+- **데이터 폴더** (플러그인 업데이트로 지워지지 않는 곳. Claude Code `${CLAUDE_PLUGIN_DATA}`, Codex·Antigravity `PLUGIN_DATA`. Gemini CLI는 데이터 폴더 변수가 [**미확인**]이라 확인 전에는 `~/.my/data/`를 쓴다): `improvements/IMP-<UUID>.md`(항목별 파일, G-3), `eval-history.md`(G-7), 평가용 복사본(G-7). 예정: `usage.json`(G-5), `support.json`(G-2), Mermaid 설치 확인 상태(H-8).
 - Claude Code용 `commands/` 폴더는 쓰지 않는다. 슬래시 호출(`/my:<이름>`)은 스킬로 처리한다. 예외는 Gemini CLI용 `commands/my/*.toml`뿐이다(1장).
 - 설치 이름은 `my@my`(플러그인@마켓플레이스)가 된다. 이후 다른 개인 플러그인도 `plugins/` 아래에 추가할 수 있다.
 - 원본 저장소는 공개 GitHub 저장소 [mykim711231/my](https://github.com/mykim711231/my)다(결정 #8). 이 PC에서는 로컬 경로로 마켓플레이스를 등록해 개발하고, 다른 PC는 이 저장소를 clone해서 쓴다.
@@ -520,7 +726,7 @@ D:\_GIT_PWA\my\                  ← my 마켓플레이스 (git 저장소)
 - **git**
   - 프로젝트 학습 폴더: 프로젝트의 git 저장소를 그대로 쓴다. 학습 폴더만 따로 저장소로 만들지 않는다. my는 커밋하지 않는다(커밋은 사용자가 한다).
   - 중앙 학습 폴더: 폴더 자체를 git 저장소로 둔다(아래 트리).
-- **공개 저장소 주의**: 프로젝트 학습 폴더에 처음 쓸 때, 프로젝트 원격이 공개 저장소일 수 있으면 선택지 질문으로 "그대로 커밋 대상으로 둠 / `.gitignore`에 추가 / 이 프로젝트는 중앙 학습 폴더 사용(`projects`에 저장)"을 묻는다. 원격이 없으면 묻지 않는다. 공개 여부를 확인하는 방법(예: `gh repo view --json visibility`)은 **[미확인: 구현 때 확인]**이다. 확인하지 못하면 원격이 있을 때 묻는다.
+- **공개 저장소 주의**: 프로젝트 학습 폴더에 처음 쓸 때, 프로젝트 원격이 공개 저장소일 수 있으면 선택지 질문으로 "그대로 커밋 대상으로 둠 / `.gitignore`에 추가 / 이 프로젝트는 중앙 학습 폴더 사용(`projects`에 저장)"을 묻는다. 원격이 없으면 묻지 않는다. 공개 여부를 확인하는 방법(예: `gh repo view --json visibility`)은 [**미확인: 구현 때 확인**]이다. 확인하지 못하면 원격이 있을 때 묻는다.
 - **폴더는 주제 기준으로 나눈다. 학습 유형(수업, 논문, 소스, 깃허브)은 폴더가 아니라 메타데이터로 둔다.**
   - 이유: 같은 주제(예: RAG)를 수업, 논문, 깃허브로 여러 번 배우게 된다. 유형별로 폴더를 나누면 같은 주제가 여러 폴더로 흩어져 통합할 수 없다.
 
@@ -1077,7 +1283,7 @@ D:\_GIT_PWA\my\                  ← my 마켓플레이스 (git 저장소)
 | `classDef`에 `fill:#1f2937`(어두운 배경)만 지정 | **어두운 배경에 어두운 글자, 안 보임** | 잘 보임 | 금지 |
 | 앞머리 설정으로 `theme: dark` 고정 | 노드가 검게 나오고 연결선이 연회색이라 흐림 | 잘 보임 | 금지 |
 
-- **테마를 지정하지 않는다.** 앞머리 설정(`config: theme`)과 `%%{init}%%`를 쓰지 않는다. 뷰어가 라이트·다크에 맞춰 테마를 고르게 둔다. 뷰어가 실제로 테마를 자동으로 바꾸는지는 **[미확인]**이다.
+- **테마를 지정하지 않는다.** 앞머리 설정(`config: theme`)과 `%%{init}%%`를 쓰지 않는다. 뷰어가 라이트·다크에 맞춰 테마를 고르게 둔다. 뷰어가 실제로 테마를 자동으로 바꾸는지는 [**미확인**]이다.
 - **`style`, `classDef`, `linkStyle`로 색을 지정하지 않는다.** 구분이 필요하면 모양(`["…"]`, `{"…"}`, `[("…")]`)과 `subgraph`로 나눈다.
 - 색이 꼭 필요하면 `classDef`에 **배경(`fill`), 글자(`color`), 테두리(`stroke`)를 모두 16진수로** 지정한다. 색 조합은 `templates/`에 3~4개만 정해 둔다. 예: `fill:#dbeafe,color:#111111,stroke:#1e40af`
   - 색 이름(`red`)은 인식되지 않으므로 16진수(`#ff0000`)를 쓴다. (문서)
@@ -1102,7 +1308,7 @@ D:\_GIT_PWA\my\                  ← my 마켓플레이스 (git 저장소)
 
 **훅 동작 — Claude Code·Codex 공통 스크립트 (Gemini CLI·Antigravity CLI는 [미확인])**
 
-- 스크립트는 `scripts/mermaid-check.mjs` 하나, 훅 파일도 `hooks/hooks.json` 하나다. Claude Code와 Codex가 같은 형식을 읽는다. **(실험: Codex는 `-c` 인라인 설정으로 확인)** Codex 플러그인 `hooks/hooks.json`의 `PostToolUse`가 불리는지는 **[미확인: 플러그인으로 설치·신뢰해 확인]**이다. 플러그인 훅은 `SessionStart`·`UserPromptSubmit`에서만 불리는 것을 확인했다(2장 표). F-1의 `hooks/hooks.json`은 Gemini CLI도 읽지만, Gemini CLI의 저장 후 이벤트와 Antigravity CLI 루트 `hooks.json`의 저장 후 이벤트는 **[미확인]**이다. 확인 전에는 두 도구에서 아래의 직접 실행 경로만 쓴다.
+- 스크립트는 `scripts/mermaid-check.mjs` 하나, 훅 파일도 `hooks/hooks.json` 하나다. Claude Code와 Codex가 같은 형식을 읽는다. **(실험: Codex는 `-c` 인라인 설정으로 확인)** Codex 플러그인 `hooks/hooks.json`의 `PostToolUse`가 불리는지는 [**미확인: 플러그인으로 설치·신뢰해 확인**]이다. 플러그인 훅은 `SessionStart`·`UserPromptSubmit`에서만 불리는 것을 확인했다(2장 "도구별 세부"). F-1의 `hooks/hooks.json`은 Gemini CLI도 읽지만, Gemini CLI의 저장 후 이벤트와 Antigravity CLI 루트 `hooks.json`의 저장 후 이벤트는 [**미확인**]이다. 확인 전에는 두 도구에서 아래의 직접 실행 경로만 쓴다.
 - 실행 시점: 활성 상태의 PostToolUse에서 지원되는 도구로 파일을 저장한 직후다. 검사 결과는 이미 저장된 파일에 대한 수정 피드백이다. 셸·외부 편집기 등 확인되지 않은 경로는 저장 훅의 적용 범위 밖으로 본다.
   1. 훅 입력(JSON)에서 저장한 파일 경로를 찾는다. `.md`가 아니거나 Mermaid 블록이 없거나, 그 프로젝트의 `mermaid_check`가 `finish`·`off`이면 바로 끝난다(약 0.3초). 일반 파일 저장은 거의 느려지지 않는다. **(실험)**
   2. 1·2단계를 실행한다.
@@ -1142,7 +1348,7 @@ D:\_GIT_PWA\my\                  ← my 마켓플레이스 (git 저장소)
 - 이미지 확인(`mmdc`): 3단계를 처음 쓸 때 확인을 받고 설치한다.
   - 설치 명령: `npm install -g @mermaid-js/mermaid-cli --allow-scripts=puppeteer`
   - **`--allow-scripts=puppeteer`를 빼면 안 된다.** npm 11은 설치 스크립트를 기본으로 막는다. 그러면 브라우저를 받지 않아 `mmdc`가 동작하지 않는다. **(이 PC)**
-  - 처음 설치하는 PC에서 브라우저까지 받아지는지는 **[미확인]**이다. 안 되면 `npx puppeteer browsers install chrome-headless-shell`로 따로 받는다.
+  - 처음 설치하는 PC에서 브라우저까지 받아지는지는 [**미확인**]이다. 안 되면 `npx puppeteer browsers install chrome-headless-shell`로 따로 받는다.
 - Node가 없는 PC: 설치하지 않는다. "Mermaid 미검증"으로 표시하고 Node 설치를 안내한다. 검사를 조용히 건너뛰지 않는다.
 - 출처: [Mermaid flowchart 문법](https://mermaid.js.org/syntax/flowchart.html), [Mermaid 테마](https://mermaid.js.org/config/theming.html), [mermaid-cli](https://github.com/mermaid-js/mermaid-cli), [Codex hooks](https://learn.chatgpt.com/docs/hooks)
 
@@ -1156,4 +1362,5 @@ D:\_GIT_PWA\my\                  ← my 마켓플레이스 (git 저장소)
 6. ~~Codex·Gemini CLI에서 키워드·훅·하위 에이전트 처리 방식~~ → 확정 (2장 "도구별 처리 방식"). 설치해야 알 수 있는 항목은 2장 "구현 때 확인할 것" 목록과 H-8의 [미확인] 항목에 모아 두고 구현 때 확인한다
 7. 평가 사례 첫 묶음, 격리·복구 시험, 도구별 대화형 수용 시험 → 기준 확정. 구현과 재현 결과는 미검증
 8. ~~GitHub 공개 여부~~ → 확정: 공개 저장소 [mykim711231/my](https://github.com/mykim711231/my) (F-1)
-9. 웹 채팅창 지원 → 설계 확정 (2-1장). 구현(`chat.md`, `pack-web.mjs`, `learn.mjs import`)과 서비스별 업로드 시험은 미검증
+9. 웹 채팅창 지원 → 구현됨 (2-1장, 0.11.0: `chat.md`, `pack-web.mjs`, `learn.mjs import`). 서비스별 업로드 시험은 미검증
+10. 아직 구현하지 않은 설계(`stack-rules`, Mermaid 검사, 다른 도구 어댑터, 다른 도구 평가, 지원 기록) → 0-1 "아직 없는 것"
