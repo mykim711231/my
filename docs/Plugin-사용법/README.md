@@ -15,6 +15,8 @@
 
 ## 내 포크에서 개선하기
 
+[OpenCode 데스크탑](opencode-desktop.md)에서는 프로젝트 설정의 `skills` 경로를 자기 포크의 `plugins/my/skills`로 지정한다.
+
 1. `plugin-config` 스킬에서 원본 경로(`plugin_src`)를 내 체크아웃의 절대 경로로 저장한다. PowerShell에서 임시로 지정하려면 도구를 실행하기 전에 `$env:MY_PLUGIN_SRC = $MyRepo`를 입력한다. 이 환경 변수가 저장된 설정보다 우선한다.
 2. `plugin-issue` 스킬로 불편한 점이나 개선 아이디어를 기록한다. 같은 도구에서 `plugin-apply` 스킬을 열고 대기 목록의 **고칠 원본**이 내 체크아웃의 `plugins/my`인지 확인한다.
 3. 반영할 항목을 고르고 수정안과 diff를 검토해 승인한다. 스킬은 내 체크아웃에 적용하고, 검증을 통과하면 버전을 올린 뒤 커밋 여부를 묻는다. 구조 검증에는 Claude Code의 `plugin-dev` 또는 `claude plugin validate`가 필요하므로 Codex나 Gemini CLI에서 개선할 때도 검증 도구를 준비한다.
