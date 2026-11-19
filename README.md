@@ -34,6 +34,16 @@ codex plugin add my@my
 
 **[Gemini CLI](docs/Plugin-사용법/gemini-cli.md)**는 전용 확장이 추가될 때까지 `mykim711231/my`를 복제해 `SKILL.md`를 경로로 지정합니다.
 
+### 웹 채팅 (채팅 모드)
+
+웹 채팅에서는 파일을 쓰거나 명령을 실행하지 않고, 결과를 화면과 md로 줍니다. `작업 종료`·`작업 이어서`는 인계 md로 새 채팅 창에서 이어 가는 방식이 됩니다. 저장소를 복제한 뒤 `node plugins/my/scripts/pack-web.mjs`로 웹 패키지(`dist/web/`)를 만들어 올립니다.
+
+| 서비스 | 가이드 |
+| --- | --- |
+| claude.ai | [스킬 zip 업로드](docs/Plugin-사용법/web-claude.md) |
+| ChatGPT | [Skills 업로드](docs/Plugin-사용법/web-chatgpt.md) |
+| Gemini | [스킬·Gem·첨부](docs/Plugin-사용법/web-gemini.md) |
+
 새 세션에서 `plugin-status` 스킬을 열어 버전과 전체 키워드를 확인합니다. 키워드 훅이 동작하면 `마이 플러그인 현황`으로 같은 스킬을 실행할 수 있습니다. Codex에서 훅을 사용하려면 CLI의 `/hooks`에서 해당 명령을 검토하고 신뢰합니다.
 
 ## 플러그인 기능과 호출 방법

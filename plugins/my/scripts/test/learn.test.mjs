@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { snap, check as guardCheck, restore } from '../guard.mjs';
-import { learnRoot, newNote, relink, topics, check, log, stage, applyStaged } from '../learn.mjs';
+import { learnRoot, newNote, importNote, relink, topics, check, log, stage, applyStaged } from '../learn.mjs';
 import { summary } from '../change-apply.mjs';
 
 const tmp = (p) => fs.mkdtempSync(path.join(os.tmpdir(), p));
@@ -76,6 +76,41 @@ test('노트: 번호·이동 링크·index.md·INDEX.md를 함께 갱신한다',
   assert.deepEqual(relink(root, 'rag'), []);
   assert.deepEqual(check(root).problems, []);
   assert.throws(() => newNote(root, { topic: '../x', name: 'n' }), /이름이 올바르지 않다/);
+});
+
+test('가져오기: 채팅 모드 노트를 번호를 매겨 들이고 본문·앞머리를 옮긴다', () => {
+  const root = tmp('my-learn-');
+  const src = tmp('my-import-');
+  const now = new Date(2026, 10, 19);
+  newNote(root, { topic: 'rag', name: 'pipeline', now });
+  const f = path.join(src, '미정-vector-db.md');
+  fs.writeFileSync(
+    f,
+    '---\r\ntopic: "rag"\r\nsubtopic: "<소주제>"\r\ntags: ["ml"]\r\nsources: ["강의.pdf:3", "<자료:페이지>"]\r\nupdated: 2026-01-01\r\n---\r\n\r\n# 벡터 DB\r\n\r\n[목록](index.md)\r\n\r\n## 요약\r\n\r\n색인 구조.\r\n\r\n## 내용\r\n\r\n```md\r\n# 코드 안 제목\r\n[목록](index.md)\r\n```\r\n\r\n## 이해도 점검\r\n\r\n- 맞음\r\n',
+  );
+  const r = importNote(root, f, { now });
+  assert.match(r.file, /rag\/02-vector-db\.md$/);
+  const t = read(r.file);
+  assert.match(t, /^# 벡터 DB$/m);
+  assert.match(t, /sources: \["강의\.pdf:3"\]/);
+  assert.match(t, /tags: \["ml"\]/);
+  assert.ok(!t.includes('subtopic:'));
+  assert.ok(!t.includes('\r'));
+  assert.match(t, /^updated: 2026-11-19$/m);
+  assert.match(t, /색인 구조\./);
+  assert.match(t, /```md\n# 코드 안 제목\n\[목록\]\(index\.md\)\n```/);
+  assert.equal(t.split('\n').filter((l) => l.startsWith('[목록](index.md) |')).length, 2);
+  assert.equal((t.match(/^## 요약$/gm) || []).length, 1);
+  assert.ok(fs.existsSync(f), '원본은 남긴다');
+  assert.match(read(path.join(root, 'rag', 'index.md')), /\[벡터 DB\]\(02-vector-db\.md\)/);
+  assert.deepEqual(check(root).problems, []);
+  // 앞머리 없는 노트: 주제가 없으면 거부, --topic·--name이면 들인다
+  const g = path.join(src, '03-x.md');
+  fs.writeFileSync(g, '# 제목만\n\n본문\n');
+  assert.throws(() => importNote(root, g, { now }), /주제가 없다/);
+  const r2 = importNote(root, g, { topic: 'misc', name: 'only-title', now });
+  assert.match(r2.file, /misc\/01-only-title\.md$/);
+  assert.match(read(r2.file), /\[목록\]\(index\.md\)\n\n본문\n\n\[목록\]\(index\.md\)/);
 });
 
 test('노트: 버전 폴더, versions 앞머리, 자료·이력 기록', () => {

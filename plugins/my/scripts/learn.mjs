@@ -5,6 +5,8 @@
 //       node learn.mjs new-note <주제> <이름> [--subtopic S] [--version N] [--versions 이름=버전 …]
 //                               [--title T] [--source X …] [--tag X …] [--central]
 //                                                → 양식으로 노트를 만들고, 앞뒤 링크·index.md·INDEX.md를 갱신. 만든 경로 출력
+//       node learn.mjs import <노트.md> [--topic T] [--name N] [--subtopic S] [--central]
+//                                                → 채팅 모드에서 받은 노트를 번호를 매겨 들이고 링크를 갱신(원본은 그대로)
 //       node learn.mjs log <주제> [--subtopic S] [--source X …] [--history T] [--central]
 //                                                → index.md의 "자료"·"학습 이력"에 줄을 더한다
 //       node learn.mjs relink <주제> [--central] → 그 주제의 이동 링크와 노트 목록, INDEX.md를 다시 쓴다
@@ -268,6 +270,59 @@ export function newNote(root, { topic, name, subtopic = '', version = '', versio
   created.push(slash(file));
   const updated = relink(root, topic).filter((f) => !created.includes(f));
   return { file: slash(file), created, updated };
+}
+
+// 채팅 모드에서 받은 노트 md(`미정-<이름>.md`)를 번호를 매겨 들인다. 원본 파일은 그대로 둔다.
+export function importNote(root, src, { topic = '', name = '', subtopic = '', now = new Date() } = {}) {
+  const raw = readTemplate(src).replace(/^﻿/, '');
+  const fm = /^---\n([\s\S]*?)\n---\n?/.exec(raw);
+  const meta = {};
+  for (const line of (fm ? fm[1] : '').split('\n')) {
+    const kv = /^([A-Za-z_-]+):\s*(.*)$/.exec(line);
+    if (kv) meta[kv[1]] = kv[2].trim();
+  }
+  const blank = (v) => !v || /^["']?<.*>["']?$/.test(v); // 양식의 자리표시(<주제>)는 빈 값
+  const scalar = (v) => {
+    if (blank(v)) return '';
+    try {
+      return v.startsWith('"') ? JSON.parse(v) : v.replace(/^'|'$/g, '');
+    } catch {
+      return v.replace(/^["']|["']$/g, '');
+    }
+  };
+  const list = (v) => {
+    if (blank(v)) return [];
+    try {
+      const a = JSON.parse(v);
+      return Array.isArray(a) ? a.map(String).filter((x) => !blank(x)) : [];
+    } catch {
+      return v.replace(/^\[|\]$/g, '').split(',').map((x) => scalar(x.trim())).filter(Boolean);
+    }
+  };
+  topic = topic || scalar(meta.topic);
+  if (!topic) throw new Error(`주제가 없다: ${slash(src)}. 앞머리 topic을 채우거나 --topic을 준다`);
+  subtopic = subtopic || scalar(meta.subtopic);
+  const base = path.basename(src).replace(/\.md$/i, '');
+  name = name || base.replace(/^미정-/, '').replace(NUM, '$2');
+  let title = '';
+  let fence = false;
+  const body = [];
+  for (const l of (fm ? raw.slice(fm[0].length) : raw).split('\n')) {
+    if (/^\s*(`{3,}|~{3,})/.test(l)) fence = !fence;
+    if (!fence && !title && /^# /.test(l)) {
+      title = l.slice(2).trim();
+      continue;
+    }
+    if (!fence && NAV.test(l)) continue;
+    body.push(l);
+  }
+  const r = newNote(root, { topic, name, subtopic, title, sources: list(meta.sources), tags: list(meta.tags), now });
+  const lines = readText(r.file).split('\n');
+  const idx = lines.map((l, k) => (NAV.test(l) ? k : -1)).filter((k) => k >= 0);
+  const content = body.join('\n').trim();
+  const next = [...lines.slice(0, idx[0] + 1), '', ...(content ? [content, ''] : []), ...lines.slice(idx.at(-1))].join('\n');
+  fs.writeFileSync(r.file, next);
+  return r;
 }
 
 // "## 제목" 절 끝에 줄을 더한다(이미 있는 줄과 "- 없음"은 건너뛴다/지운다).
@@ -556,6 +611,15 @@ function cli(argv) {
     for (const f of r.updated) console.log(`갱신: ${f}`);
     return;
   }
+  if (cmd === 'import') {
+    if (!pos[0]) throw new Error('가져올 노트 md를 준다');
+    const r = importNote(lr.root, pos[0], { topic: opt('--topic'), name: opt('--name'), subtopic: opt('--subtopic') });
+    console.log(`노트: ${r.file}`);
+    for (const f of r.created.filter((f) => f !== r.file)) console.log(`만듦: ${f}`);
+    for (const f of r.updated) console.log(`갱신: ${f}`);
+    console.log(`원본은 그대로 둠: ${slash(path.resolve(pos[0]))}`);
+    return;
+  }
   if (cmd === 'log') {
     if (!pos[0]) throw new Error('주제를 준다');
     const f = log(lr.root, pos[0], { subtopic: opt('--subtopic'), sources: multi('--source'), history: opt('--history') });
@@ -591,7 +655,7 @@ function cli(argv) {
     for (const e of s.entries) console.log(`- ${e.path} — ${e.kind}`);
     return;
   }
-  throw new Error('명령: root | topics | new-note | log | relink | check | stage <변경안.json> | apply <기록 폴더>  (apply 말고는 --central 가능)');
+  throw new Error('명령: root | topics | new-note | import <노트.md> | log | relink | check | stage <변경안.json> | apply <기록 폴더>  (apply 말고는 --central 가능)');
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
