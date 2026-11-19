@@ -1,5 +1,7 @@
 # 내 포크로 my 설치하고 개선하기
 
+처음 사용한다면 [루트 README](../../README.md#설치하고-시작하기)의 GitHub 설치 절차를 따른다. 자신의 스킬이나 훅을 개선할 때 아래 절차로 포크를 준비한다.
+
 1. GitHub에서 [원본 저장소](https://github.com/mykim711231/my)를 열고 **Fork**를 눌러 내 계정에 복사한다. 아래 `YOUR_GITHUB_ID`는 내 GitHub 계정명으로 바꾼다.
 2. PowerShell에서 내 포크를 복제한다. `$MyRepo`는 로컬 체크아웃 경로다. 다른 위치를 쓰려면 첫 줄을 바꾼다.
 
@@ -9,7 +11,7 @@
    git -C $MyRepo remote get-url origin
    ```
 
-3. `origin`이 내 포크를 가리키는지 확인하고, 사용하는 도구의 가이드에 따라 설치한다. [Claude Code](claude-code.md) · [Codex](codex.md) · [Gemini CLI](gemini-cli.md)
+3. `origin`이 내 포크를 가리키는지 확인한다. 포크 버전을 실행하려면 [Claude Code](claude-code.md)나 [Codex](codex.md)의 등록 명령에서 `mykim711231/my`를 `$MyRepo`로 바꾼다. GitHub에 푸시한 포크를 직접 설치하려면 `YOUR_GITHUB_ID/my`로 바꾼다. 기존 `my` 등록과 출처가 다르면 전환할 때 기존 마켓플레이스 등록을 먼저 제거한다. [Gemini CLI](gemini-cli.md)에서는 이 단계에서 복제한 체크아웃의 `SKILL.md`를 지정한다.
 
 ## 내 포크에서 개선하기
 

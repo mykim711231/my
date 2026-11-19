@@ -6,7 +6,14 @@
 
 ## 로컬 체크아웃으로 실행
 
-[내 포크 만들기](README.md)에 따라 복제한 뒤 PowerShell에서 `gemini --version`, `node --version`을 확인한다. 작업할 프로젝트 루트에서 `gemini`를 실행하고 아래 요청을 입력한다. 아래 예시의 `C:/Users/YOUR_WINDOWS_USER/src/my`를 내 체크아웃의 실제 절대 경로로 바꾼다.
+PowerShell에서 `gemini --version`, `node --version`을 확인하고 GitHub 저장소를 복제한다.
+
+```powershell
+$MyRepo = Join-Path $env:USERPROFILE 'src/my'
+git clone https://github.com/mykim711231/my.git $MyRepo
+```
+
+작업할 프로젝트 루트에서 `gemini`를 실행하고 아래 요청을 입력한다. 예시의 `C:/Users/YOUR_WINDOWS_USER/src/my`는 실제 체크아웃 경로로 바꾼다. 직접 수정한 버전을 사용하려면 [포크 및 개선 가이드](README.md)의 체크아웃 경로를 사용한다.
 
 ```text
 C:/Users/YOUR_WINDOWS_USER/src/my/plugins/my/skills/plugin-status/SKILL.md를 읽고 지시에 따라 my 플러그인 현황을 보여 줘.

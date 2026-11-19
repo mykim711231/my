@@ -5,12 +5,12 @@
 현재 `my`는 저장소의 Claude Code 형식 마켓플레이스와 플러그인 매니페스트를 Codex의 호환 경로로 읽는다. PowerShell에서 `codex --version`과 `node --version`으로 CLI와 Node.js를 확인한다. `codex` 명령이 검색되지 않으면 설치된 Codex CLI 실행 파일의 전체 경로를 사용한다.
 
 ```powershell
-codex plugin marketplace add $MyRepo
+codex plugin marketplace add mykim711231/my
 codex plugin marketplace list
 codex plugin add my@my
 ```
 
-`$MyRepo`는 [내 포크 만들기](README.md)에서 지정한 로컬 체크아웃 경로다. 내 포크를 GitHub에서 직접 설치하려면 첫 줄에 `codex plugin marketplace add YOUR_GITHUB_ID/my`를 사용한다. 이미 `my` 마켓플레이스가 있다면 목록에서 내 포크가 등록되어 있는지 확인한다. 사용 중인 CLI의 `codex plugin --help`에 `add`가 없으면 대화형 Codex의 `/plugins`에서 `my` 마켓플레이스의 `my`를 설치한다. [Codex 플러그인 패키징](https://developers.openai.com/plugins/build/plugins)
+이미 `my` 마켓플레이스가 있다면 목록에서 등록된 출처를 확인한다. 사용 중인 CLI의 `codex plugin --help`에 `add`가 없으면 대화형 Codex의 `/plugins`에서 `my` 마켓플레이스의 `my`를 설치한다. 직접 수정한 버전을 사용하려면 [포크 및 개선 가이드](README.md)를 따른다. [Codex 플러그인 패키징](https://developers.openai.com/plugins/build/plugins)
 
 ## 실행과 훅 승인
 

@@ -4,15 +4,15 @@
 
 Claude Code와 Node.js가 설치되어 있어야 한다. PowerShell에서 `claude --version`, `node --version`으로 확인한다.
 
-[내 포크 만들기](README.md)에 따라 복제한 뒤, 같은 PowerShell에서 `$MyRepo`를 사용해 내 포크의 로컬 체크아웃을 등록한다.
+PowerShell에서 GitHub의 `mykim711231/my`를 마켓플레이스로 등록한다.
 
 ```powershell
-claude plugin marketplace add $MyRepo
+claude plugin marketplace add mykim711231/my
 claude plugin install my@my
 claude plugin list
 ```
 
-내 포크를 GitHub에서 직접 설치하려면 첫 줄에 `claude plugin marketplace add YOUR_GITHUB_ID/my`를 사용한다. `my@my`의 앞쪽은 플러그인 이름, 뒤쪽은 마켓플레이스 이름이다. 이미 다른 `my` 마켓플레이스가 등록되어 있다면 `claude plugin marketplace list`로 출처를 확인하고, 기존 설치를 교체할 때만 기존 등록을 제거해 내 포크를 등록한다. [Claude Code 플러그인 마켓플레이스](https://code.claude.com/docs/en/discover-plugins)
+`my@my`의 앞쪽은 플러그인 이름, 뒤쪽은 마켓플레이스 이름이다. 이미 `my`가 등록되어 있다면 `claude plugin marketplace list`로 출처를 확인한다. 직접 수정한 버전을 사용하려면 [포크 및 개선 가이드](README.md)를 따른다. [Claude Code 플러그인 마켓플레이스](https://code.claude.com/docs/en/discover-plugins)
 
 ## 실행
 
