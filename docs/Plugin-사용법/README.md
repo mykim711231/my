@@ -1,11 +1,41 @@
-# 포크해서 my 개선하기
+# my 사용 안내
 
-처음 쓴다면 [루트 README](../../README.md#설치하고-시작하기)에서 쓰는 곳의 안내서를 따른다. 자기 작업 방식에 맞게 스킬이나 훅을 고치려면 아래 절차로 포크를 준비한다.
+데스크탑과 CLI 설치는 [루트 README](../../README.md#설치하고-시작하기)의 환경별 안내를 따른다. 웹에서 쓸 파일은 아래 절차로 만들고, 직접 수정할 원본은 [포크 설치](#포크-설치) 절차로 준비한다.
 
-- 필요한 것: GitHub 계정, Git, Node.js
-- 아래 `YOUR_GITHUB_ID`는 내 GitHub 계정명으로 바꾼다.
+## 웹 패키지 만들기
+
+패키지를 만들 PC에 Git과 Node.js가 필요하다. ZIP 생성에 쓰는 `zlib.crc32`는 Node.js 22.2부터 제공되며, 20.x에서는 20.15부터 쓸 수 있다. [Node.js API 문서](https://nodejs.org/api/zlib.html#zlibcrc32data-value)
+
+처음 설치할 때는 저장소를 복제하고 복제한 `my` 폴더로 이동한다. 이미 복제했다면 해당 저장소 루트로 이동한다.
+
+```powershell
+git clone https://github.com/mykim711231/my
+Set-Location my
+```
+
+저장소 루트에서 패키지를 만든다.
+
+```powershell
+node plugins/my/scripts/pack-web.mjs
+```
+
+| `dist/web/`의 파일 또는 폴더 | 사용할 화면 |
+| --- | --- |
+| `my-chatgpt-plugin.zip` | [ChatGPT 웹](web-chatgpt.md#설치)의 **새 플러그인** |
+| `my-claude-plugin.zip` | [Claude 웹](web-claude.md#설치)의 **플러그인 업로드** |
+| `my-skill.zip` | [Claude 웹](web-claude.md#설치)의 **스킬 업로드** |
+| `my/` | [Gemini 웹](web-gemini.md#설치)의 **스킬 → 만들기 → 업로드** |
+| `my-onefile.md` | 프로젝트·GPT·Gem 지침 또는 대화 첨부 |
+
+## 웹 패키지 업데이트
+
+저장소 루트에서 `git pull --ff-only`로 체크아웃을 갱신한다. 성공하면 `node plugins/my/scripts/pack-web.mjs`를 다시 실행하고, 사용 중인 웹 서비스에서 `dist/web/`의 새 결과물로 교체한다. [ChatGPT 업데이트](web-chatgpt.md#업데이트) · [Claude 업데이트](web-claude.md#업데이트) · [Gemini 업데이트](web-gemini.md#업데이트)
+
+웹의 현황표와 최근 변경은 올린 패키지에 들어 있다. 교체한 뒤 새 대화에서 `마이 플러그인 현황`을 보내 버전과 최근 변경을 확인한다. 같은 버전으로 패키지를 다시 만들었을 때는 최근 변경 내용을 비교해 교체 여부를 확인한다. 대화 첨부로 쓰는 경우 새 대화에 최신 `my-onefile.md`를 첨부한다.
 
 ## 포크 설치
+
+GitHub 계정, Git, Node.js가 필요하다. `YOUR_GITHUB_ID`는 내 GitHub 계정명으로 바꾼다.
 
 1. GitHub에서 [원본 저장소](https://github.com/mykim711231/my)를 열고 **Fork**를 눌러 내 계정에 복사한다.
 2. PowerShell에서 내 포크를 복제한다. `$MyRepo`는 로컬 체크아웃 경로다. 다른 위치를 쓰려면 첫 줄을 바꾼다.
