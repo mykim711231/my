@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0
+
+- `plugin-config` 스킬: `마이 플러그인 설정`으로 설정 현황표(값·출처·폴더 상태·env 가림·폴더 없는 프로젝트 항목)를 보여 주고, 고른 항목을 diff 미리보기 → 승인 → 저장한다.
+- `config.mjs`: `table`, `set`, `remove-project`, `move-project` 명령. 저장은 미리보기 해시(`--expect`)가 맞을 때만, 임시 파일 후 이름 바꾸기로 쓴다. 깨진 JSON이면 쓰지 않는다.
+
 ## 0.2.0
 
 - `plugin-issue` 스킬: `마이 플러그인 문제 <내용>`을 데이터 폴더 `improvements/IMP-<UUID>.md`에 한 건씩 기록(`issue.mjs`, 배타적 생성).
