@@ -275,9 +275,9 @@ export function planChange(op, { home = os.homedir(), cwd = process.cwd(), root,
     if (!VALID[key](value)) throw new Error(`"${key}"에 ${JSON.stringify(op.value)}는 허용되지 않는다`);
     if (PATH_KEYS.has(key)) value = normalizePath(value);
     if (op.project) {
-      if (!PROJECT_KEYS.has(key)) throw new Error(`"${key}"는 프로젝트별로 둘 수 없다(전체 기본값으로만 저장)`);
+      if (!PROJECT_KEYS.has(key)) throw new Error(`"${key}"는 프로젝트별로 둘 수 없다(모든 프로젝트 기본값으로만 저장)`);
       const r = root === undefined ? gitRoot(cwd) : root;
-      if (!r) throw new Error('git 루트 밖이라 "이 프로젝트만"으로 저장할 수 없다');
+      if (!r) throw new Error('git 루트 밖이라 "이 프로젝트에만"으로 저장할 수 없다');
       const ps = projects();
       const k = findKey(r) ?? normalizePath(r);
       ps[k] = { ...(ps[k] || {}), [key]: value };
