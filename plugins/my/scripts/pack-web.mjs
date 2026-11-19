@@ -87,7 +87,11 @@ function statusText(root, { keywords, version }) {
     const [head, ...body] = b.trim().split('\n');
     return `- ${head.trim()}: ${body.filter((l) => l.startsWith('- ')).map((l) => l.slice(2)).join(' / ')}`;
   });
-  lines.push('', '## 최근 변경', '', ...recent, '', `문제는 \`마이 플러그인 문제 <내용>\` 또는 ${ISSUE_URL}`);
+  lines.push(
+    '', '## 최근 변경', '', ...recent, '',
+    `\`마이 플러그인 문제 <내용>\`으로 제보용 초안을 만들고 [GitHub 새 이슈](${ISSUE_URL})에서 제출할 수 있습니다.`,
+    'GitHub에서 이슈를 작성하려면 로그인이 필요합니다.',
+  );
   return lines.join('\n') + '\n';
 }
 
