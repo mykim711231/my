@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 웹 채팅 패키지(plan 2-1-6): 각 스킬의 chat.md와 keywords.json으로 라우터 스킬 하나와 한 파일 판을 만든다.
 // 사용: node pack-web.mjs [--out 폴더]   (기본: 저장소의 dist/web)
-//   만드는 것: my/(SKILL.md, work.md, learn.md, project.md, sync.md, plugin.md, status.md), my-skill.zip, my-onefile.md
+//   만드는 것: my/ 스킬 폴더, my-skill.zip, my-chatgpt-plugin.zip, my-claude-plugin.zip, my-onefile.md
 //   스크립트·훅은 넣지 않는다.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -69,14 +69,14 @@ export function sources(root = PLUGIN) {
   if (missing.length) throw new Error(`chat.md가 없는 스킬: ${missing.join(', ')}`);
   const unmapped = keywords.commands.filter((c) => !groupOf(c.skill)).map((c) => c.skill);
   if (unmapped.length) throw new Error(`묶음이 없는 스킬: ${unmapped.join(', ')}`);
-  const version = JSON.parse(read(path.join(root, '.claude-plugin', 'plugin.json'))).version;
+  const { version, author } = JSON.parse(read(path.join(root, '.claude-plugin', 'plugin.json')));
   // 묶음 안 순서는 키워드 표 순서. 표에 없는 스킬은 뒤에 이름순으로.
   const rank = (s) => {
     const i = keywords.commands.findIndex((c) => c.skill === s);
     return i < 0 ? Infinity : i;
   };
   skills.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
-  return { keywords, skills, version };
+  return { keywords, skills, version, developerName: author?.name || 'my' };
 }
 
 function statusText(root, { keywords, version }) {
@@ -132,10 +132,51 @@ export function build({ root = PLUGIN, out = path.join(REPO, 'dist', 'web') } = 
   const dir = path.join(out, 'my');
   fs.mkdirSync(dir, { recursive: true });
   for (const [name, text] of files) fs.writeFileSync(path.join(dir, name), text);
-  fs.writeFileSync(path.join(out, 'my-skill.zip'), zip([...files].map(([n, t]) => [`my/${n}`, Buffer.from(t)])));
+  const skillFiles = [...files].map(([name, text]) => [name, Buffer.from(text)]);
+  fs.writeFileSync(path.join(out, 'my-skill.zip'), zip(skillFiles.map(([name, data]) => [`my/${name}`, data])));
+
+  const manifest = {
+    name: 'my',
+    version: src.version,
+    description: desc,
+    author: { name: src.developerName },
+  };
+  const pluginSkills = skillFiles.map(([name, data]) => [`skills/my/${name}`, data]);
+  const claudeEntries = [
+    ['.claude-plugin/plugin.json', Buffer.from(JSON.stringify(manifest, null, 2) + '\n')],
+    ...pluginSkills,
+  ];
+  fs.writeFileSync(path.join(out, 'my-claude-plugin.zip'), zip(claudeEntries));
+
+  const iconPath = 'assets/my.svg';
+  const chatgptManifest = {
+    ...manifest,
+    skills: './skills/',
+    interface: {
+      displayName: 'my',
+      shortDescription: '작업 인계, 자료 학습, 프로젝트 정리',
+      longDescription: '작업 내용을 요약하고 프로젝트 인계 문서를 작성합니다. 첨부한 코드·논문·강의 자료를 함께 읽고, 요구사항과 기술 명세의 초안을 채팅과 Markdown으로 제공합니다.',
+      developerName: src.developerName,
+      category: 'Productivity',
+      capabilities: ['작업 요약과 인계 문서 작성', '코드·논문·강의 자료 읽기', '프로젝트 명세 초안 작성'],
+      composerIcon: `./${iconPath}`,
+      logo: `./${iconPath}`,
+    },
+  };
+  const chatgptEntries = [
+    ['.codex-plugin/plugin.json', Buffer.from(JSON.stringify(chatgptManifest, null, 2) + '\n')],
+    [iconPath, fs.readFileSync(path.join(root, 'templates', 'web', 'icon.svg'))],
+    ...pluginSkills,
+  ];
+  fs.writeFileSync(path.join(out, 'my-chatgpt-plugin.zip'), zip(chatgptEntries));
+
   const one = [routerBody(root, src, true), ...groups.map((x) => demote(x.text)), demote(status)].join('\n');
   fs.writeFileSync(path.join(out, 'my-onefile.md'), one);
-  return { out: out.replace(/\\/g, '/'), files: [...files.keys()].map((n) => `my/${n}`).concat('my-skill.zip', 'my-onefile.md'), version: src.version };
+  return {
+    out: out.replace(/\\/g, '/'),
+    files: [...files.keys()].map((name) => `my/${name}`).concat('my-skill.zip', 'my-chatgpt-plugin.zip', 'my-claude-plugin.zip', 'my-onefile.md'),
+    version: src.version,
+  };
 }
 
 // 최소 zip 쓰기(deflate). 외부 패키지를 쓰지 않는다.

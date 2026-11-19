@@ -24,7 +24,7 @@
 | [Codex CLI](codex.md#설치) · [ChatGPT 데스크탑](chatgpt-desktop.md#설치) | 위와 같음 |
 | [OpenCode](opencode-desktop.md#설치) | `opencode.json`의 `skills` 경로를 `$MyRepo`의 `plugins/my/skills`로 |
 | [Gemini CLI](gemini-cli.md#설치) | 요청에 적는 `SKILL.md` 경로를 `$MyRepo` 아래로 |
-| 웹 채팅 ([claude.ai](web-claude.md#설치) 등) | `$MyRepo`에서 `pack-web.mjs`로 만든 패키지를 올림 |
+| 웹 채팅 ([ChatGPT](web-chatgpt.md#설치) · [Gemini](web-gemini.md#설치) · [claude.ai](web-claude.md#설치)) | `$MyRepo`에서 `pack-web.mjs`를 실행하고 사용 환경에 맞는 생성물을 올림 |
 
 기존 `my` 등록과 출처가 다르면 전환할 때 기존 마켓플레이스 등록을 먼저 제거한다.
 

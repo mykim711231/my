@@ -1,6 +1,6 @@
 # Codex CLI에서 my 사용하기
 
-Codex 전용 매니페스트는 아직 없다. Codex가 저장소의 Claude Code 형식 마켓플레이스와 매니페스트를 호환 경로로 읽는다. [Codex 플러그인 패키징](https://developers.openai.com/plugins/build/plugins) · [저장소의 Codex 호환 실험](../plan.md)
+Codex CLI는 저장소의 Claude Code 형식 마켓플레이스와 매니페스트를 호환 경로로 읽는다. ChatGPT 웹 업로드용 매니페스트는 웹 패키지를 만들 때 생성된다. [Codex 플러그인 패키징](https://developers.openai.com/plugins/build/plugins) · [ChatGPT 웹 안내](web-chatgpt.md)
 
 - 필요한 것: Codex CLI, Node.js. PowerShell에서 `codex --version`, `node --version`으로 확인한다. `codex`가 검색되지 않으면 실행 파일의 전체 경로를 쓴다.
 - `마이` 키워드: `/hooks`에서 훅을 승인한 뒤 자동
@@ -14,6 +14,8 @@ codex plugin add my@my
 ```
 
 이미 `my` 마켓플레이스가 있다면 목록에서 등록된 출처를 확인한다. `codex plugin --help`에 `add`가 없으면 대화형 Codex의 `/plugins`에서 `my` 마켓플레이스의 `my`를 설치한다.
+
+`codex plugin add my@my`는 사용자 전역으로 설치한다. 프로젝트 폴더 밖에서 `codex plugin list --marketplace my --json`을 실행해 `my@my`의 `installed`와 `enabled`가 `true`인지 확인한다. [Codex CLI 플러그인 명령](https://learn.chatgpt.com/docs/developer-commands#codex-plugin)
 
 ## 설치 확인
 

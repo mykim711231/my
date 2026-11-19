@@ -1,6 +1,6 @@
 # Gemini 웹에서 my 사용하기 (채팅 모드)
 
-웹 채팅에서는 파일을 쓰거나 명령을 실행하지 않는다. 결과는 화면과 md 코드 블록으로 받는다. 올리는 법만 claude.ai와 다르고, 나머지는 [claude.ai 웹](web-claude.md)과 같다.
+웹 채팅에서 작업 결과는 화면과 Markdown으로 받는다. 채팅 모드에서 할 수 있는 작업은 [claude.ai 웹](web-claude.md)과 같다.
 
 - 필요한 것: Gemini 계정, 웹 패키지를 만들 PC의 Git과 Node.js
 - `마이` 키워드: 훅이 없어 모델이 스킬 안의 키워드 표를 보고 고른다.
@@ -14,18 +14,18 @@
    node my/plugins/my/scripts/pack-web.mjs
    ```
 
-   `my/dist/web/`에 `my-skill.zip`과 `my-onefile.md`가 생긴다. Gemini에는 대개 한 파일 판 `my-onefile.md`를 쓴다.
+   `my/dist/web/my/`에 `SKILL.md`와 키워드별 안내·현황 Markdown 파일이 생긴다.
 
-2. Gemini 앱의 스킬 업로드는 순차 배포 중이고, Gem은 스킬로 바뀌는 중이다. 계정에서 되는 방법을 위에서부터 고른다.
-   - 스킬 업로드가 보이면 `my-onefile.md`를 스킬로 올린다(SKILL.md 한 장만 받는 경우).
-   - Gem을 만들 수 있으면 Gem 지침에 `my-onefile.md` 내용을 붙이거나 지식 파일로 첨부한다.
-   - 둘 다 없으면 대화마다 첫 메시지에 `my-onefile.md`를 첨부하고 "이 파일의 규칙을 따라 줘"라고 보낸다.
+2. Gemini 웹에서 **스킬 → 만들기 → 업로드**를 열고 `my/dist/web/my/` 폴더를 통째로 선택한다. `SKILL.md`가 같은 폴더의 안내와 현황 파일을 참조한다. [Gemini 스킬 업로드 도움말](https://support.google.com/gemini/answer/17094296?hl=ko)
+3. 업로드한 지침과 첨부 파일을 확인한 뒤 스킬을 만든다.
 
-[Gemini skills](https://support.google.com/gemini/answer/18560919) · 메뉴 이름과 제공 범위는 바뀔 수 있다. 세 방법 모두 이 저장소에서 아직 직접 시험하지 않았다(미검증).
+스킬 업로드 메뉴를 쓸 수 없으면 `my/dist/web/my-onefile.md`의 내용을 Gem 지침에 붙이거나 대화 첫 메시지에 파일을 첨부해 그 지침을 따라 달라고 요청한다.
 
 ## 설치 확인
 
-`마이 플러그인 현황`을 보낸다. 답 첫 줄이 "채팅 모드 — 파일 쓰기·명령 실행 없음"이고 버전과 키워드 표가 나오면 적용된 것이다. 첨부 방식은 대화가 길어지면 규칙이 흐려질 수 있으니, 응답이 양식을 벗어나면 파일을 다시 첨부한다.
+새 대화에서 `마이 플러그인 현황`을 보낸다. 자동으로 적용되지 않으면 입력창의 `/` 또는 `@` 목록에서 **my** 스킬을 선택한 뒤 보낸다. [Gemini 스킬 사용 도움말](https://support.google.com/gemini/answer/17094296?hl=ko)
+
+Gemini 웹에서 업로드 메뉴가 표시되고 현황 응답에 `my 플러그인 현황 (웹)`, 버전 0.11.0과 키워드 표가 나오는 것을 확인했다. 표에서 `마이 플러그인 개선`과 `마이 플러그인 평가`는 로컬 전용으로 표시된다.
 
 ## 작업별 호출
 
@@ -37,7 +37,9 @@ claude.ai 웹과 같다.
 
 ## 업데이트
 
-체크아웃을 갱신(`git -C my pull`)하고 `pack-web.mjs`로 패키지를 다시 만든 뒤 다시 올리거나 붙인다. 새 대화에서 `마이 플러그인 현황`으로 버전을 확인한다.
+체크아웃을 갱신(`git -C my pull`)하고 `pack-web.mjs`로 패키지를 다시 만든다. 스킬의 **스킬 교체(Replace skill)**에서 새 `my/` 폴더를 올리거나 사용 중인 지침의 `my-onefile.md` 내용을 갱신한다. 새 대화에서 현황 명령으로 버전을 확인한다. [Gemini 스킬 수정 도움말](https://support.google.com/gemini/answer/17094296?hl=ko)
+
+현황의 **최근 변경**은 패키지 생성 시 들어간 `status.md`를 읽는다. 버전이 같아도 이력이 달라질 수 있으므로, 교체한 뒤에는 새 대화에서 최근 변경 내용도 확인한다.
 
 ---
 

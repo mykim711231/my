@@ -14,18 +14,20 @@
    node my/plugins/my/scripts/pack-web.mjs
    ```
 
-   `my/dist/web/`에 `my-skill.zip`(스킬 폴더 `my/`를 묶은 것)과 `my-onefile.md`(한 파일 판)가 생긴다.
+   `my/dist/web/`에 Claude 플러그인용 `my-claude-plugin.zip`, 스킬용 `my-skill.zip`, 한 파일 판 `my-onefile.md`가 생긴다.
 
-2. claude.ai 설정에서 코드 실행(Code execution and file creation)을 켠다. 꺼져 있으면 스킬을 쓰지 못한다.
-3. 설정의 Capabilities → Skills에서 `my-skill.zip`을 업로드하고 켠다.
+2. claude.ai 설정에서 **Code execution and file creation**(새 설정에서는 **Create and edit files**)을 켠다.
+3. 사용 중인 업로드 화면에 맞는 ZIP을 선택한다.
+   - **내 플러그인 → 플러그인 업로드**에서는 `my-claude-plugin.zip`을 선택한다. 이 ZIP의 최상위에 `.claude-plugin/plugin.json`과 `skills/my/SKILL.md`가 있다. [Claude 플러그인 도움말](https://support.claude.com/en/articles/13837440-use-plugins-in-claude) · [플러그인 구조](https://code.claude.com/docs/en/plugins-reference#plugin-directory-structure)
+   - **Customize → Skills → + → Create skill → Upload a skill**에서는 `my-skill.zip`을 선택하고 목록에 추가된 **my**를 켠다. [Claude 스킬 도움말](https://support.claude.com/en/articles/12512180-use-skills-in-claude)
 
 스킬을 쓸 수 없는 요금제나 환경이면 `my-onefile.md`를 프로젝트 지침(Project instructions)에 붙이거나 대화 첫 메시지에 첨부한다.
 
-[Use skills](https://support.claude.com/en/articles/12512180-use-skills) · 메뉴 이름은 바뀔 수 있다. 업로드 절차는 이 저장소에서 아직 직접 시험하지 않았다(미검증).
+플러그인 업로드에서 `.claude-plugin/plugin.json`이 필요하다는 오류가 표시되면 `my-claude-plugin.zip`을 선택한다. ZIP 구조는 자동 테스트로 검증한다. claude.ai에서 업로드 성공과 실행은 미검증이다.
 
 ## 설치 확인
 
-새 대화에서 `마이 플러그인 현황`을 보낸다. 답 첫 줄이 "채팅 모드 — 파일 쓰기·명령 실행 없음"이고 버전과 키워드 표가 나오면 웹 판이 적용된 것이다.
+새 대화에서 `마이 플러그인 현황`을 보낸다. 플러그인으로 설치한 스킬이 자동으로 적용되지 않으면 입력창의 `/` 또는 `+` 목록에서 **my**의 스킬을 선택해 보낸다. 답에 "채팅 모드 — 파일 쓰기·명령 실행 없음", 버전, 키워드 표가 나오는지 확인한다. [Claude 플러그인 도움말](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
 
 ## 작업별 호출
 
@@ -61,7 +63,7 @@ node my/plugins/my/scripts/learn.mjs import 미정-vector-db.md
 
 ## 업데이트
 
-체크아웃을 갱신(`git -C my pull`)하고 `pack-web.mjs`로 패키지를 다시 만든 뒤 다시 올린다. 새 대화에서 `마이 플러그인 현황`으로 버전을 확인한다.
+체크아웃을 갱신(`git -C my pull`)하고 `pack-web.mjs`를 실행한다. 기존에 선택한 업로드 화면에 맞춰 새 ZIP을 올리고, 새 대화에서 `마이 플러그인 현황`으로 버전을 확인한다.
 
 ---
 

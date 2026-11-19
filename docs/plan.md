@@ -36,7 +36,7 @@
 
 - 기술 규칙 스킬 `stack-rules` (D)
 - Mermaid 검사 `mermaid-check.mjs`와 저장 후 훅 (H-8)
-- Claude 형식 밖의 어댑터: `.codex-plugin/`, `gemini-extension.json`, `.antigravity-plugin/`, 루트 `hooks.json`, `commands/my/*.toml` (2장, F-1). Codex는 Claude 형식 플러그인을 그대로 읽어 설치된다(2장 "도구별 세부").
+- 로컬 도구 전용 어댑터: `.codex-plugin/`, `gemini-extension.json`, `.antigravity-plugin/`, 루트 `hooks.json`, `commands/my/*.toml` (2장, F-1). Codex CLI는 Claude 형식으로 설치된다(2장 "도구별 세부"). ChatGPT 웹용 `.codex-plugin/plugin.json`은 ZIP 안에 생성된다(2-1-6).
 - 다른 도구 평가 `eval-other.mjs` (G-7), 도구별 지원 기록 `support-status.mjs`·`support.json` (G-2)
 - 선택 기능 사용 기록 `usage.json` (G-5). 설정 키 `usage_log`만 있고 기록하는 코드는 아직 없다
 - Mermaid 설정 `mermaid_check`도 키만 있다. 지금은 `project.mjs` 점검이 Mermaid 블록을 찾으면 "Mermaid 미검증"으로 표시한다
@@ -358,13 +358,17 @@ ChatGPT·Claude·Gemini 웹 채팅창에서도 같은 키워드를 쓴다. 파�
 ### 2-1-6. 웹 패키지
 
 - 스킬 21개를 서비스 3곳에 따로 올리면 63번 올려야 한다. 그래서 웹에는 **라우터 스킬 `my` 하나**만 올린다: SKILL.md가 키워드(`keywords.json`과 같은 표)를 보고 `work.md`, `learn.md`, `project.md`, `sync.md`, `plugin.md` 중 하나를 읽게 한다. 각 파일은 해당 스킬들의 `chat.md`를 모은 것이다.
-- Gemini처럼 여러 파일 스킬을 못 쓰거나 지침 한 장만 받는 곳을 위해 **한 파일 판**도 만든다.
-- `scripts/pack-web.mjs`가 둘 다 만든다(원본은 각 스킬의 `chat.md`와 `keywords.json`, 같은 내용을 두 곳에 쓰지 않는다). 스크립트·훅은 넣지 않는다. `plugin-status`용 현황표는 이때 만들어 넣는다.
-- 서비스별 올리는 방법 (2026-11-19 확인):
-  - claude.ai: 스킬 zip 업로드. 코드 실행이 켜져 있어야 스킬을 쓴다. [Use skills](https://support.claude.com/en/articles/12512180-use-skills)
-  - ChatGPT: Skills → Create → Upload. [Skills in ChatGPT](https://help.openai.com/articles/20001066-skills-in-chatgpt)
-  - Gemini 앱: SKILL.md 업로드(순차 배포 중). Gem은 스킬로 바뀌는 중이다. 업로드가 안 되면 한 파일 판을 대화 첫 메시지나 Gem 지침에 붙인다. [Gemini skills](https://support.google.com/gemini/answer/18560919)
-- 사용 안내는 `docs/Plugin-사용법/web-claude.md`, `web-chatgpt.md`, `web-gemini.md`에 둔다.
+- `scripts/pack-web.mjs`는 `dist/web/`에 스킬 폴더 `my/`, 스킬 ZIP `my-skill.zip`, ChatGPT용 `my-chatgpt-plugin.zip`, Claude용 `my-claude-plugin.zip`, 한 파일 판 `my-onefile.md`를 만든다. 각 스킬의 `chat.md`와 `keywords.json`으로 채팅 지침과 현황표를 만든다.
+- 두 플러그인 ZIP은 `skills/my/`에 같은 스킬을 담고 각각 루트에 `.codex-plugin/plugin.json`과 `.claude-plugin/plugin.json`을 둔다. 버전과 작성자는 원본 `.claude-plugin/plugin.json`에서 읽는다. ChatGPT용 ZIP에는 업로드에 필요한 `interface`와 아이콘도 들어간다.
+- 키워드 23개 중 21개에 채팅 지침이 있다. `plugin-apply`와 `plugin-eval`은 로컬 도구로 안내한다.
+
+| 환경 | 등록 방법 | 0.11.0 확인 범위 |
+| --- | --- | --- |
+| [ChatGPT 웹](Plugin-사용법/web-chatgpt.md) | **새 플러그인**에서 `my-chatgpt-plugin.zip` 등록 후 입력창에서 `@`로 `my` 선택 | ZIP 등록과 현황 명령 실행 확인 |
+| [Gemini 웹](Plugin-사용법/web-gemini.md) | **스킬 → 만들기 → 업로드**에서 `SKILL.md`가 있는 `my/` 폴더 선택 | 업로드 메뉴와 현황 응답 확인 |
+| [claude.ai](Plugin-사용법/web-claude.md) | **플러그인 업로드**에는 `my-claude-plugin.zip`, **스킬 업로드**에는 `my-skill.zip` 사용 | 플러그인 업로드의 매니페스트 요구사항을 화면에서 확인. 전용 ZIP은 로컬 검증 |
+
+지침 한 파일이 필요한 환경에서는 `my-onefile.md`를 프로젝트·Gem 지침에 붙이거나 대화에 첨부한다.
 
 ## A. 세션 흐름 — 확정
 
@@ -974,7 +978,7 @@ my/                                  ← my 마켓플레이스 (git 저장소)
 
 ### G-4. 버전 규칙
 
-- `version`을 SemVer(`주.부.수정`)로 관리한다. 버전은 네 매니페스트(`.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, `gemini-extension.json`, `.antigravity-plugin/plugin.json`)에 같은 값으로 쓴다. 반영 단계가 넷을 함께 올리고, 값이 다르면 검증에서 실패시킨다.
+- `version`을 SemVer(`주.부.수정`)로 관리한다. 반영 단계는 저장소에 있는 매니페스트의 버전을 함께 올리고, 값이 다르면 검증에서 실패시킨다. ChatGPT 웹 ZIP의 매니페스트는 패키지 생성 시 `.claude-plugin/plugin.json`의 버전을 읽는다.
   - 수정: 스킬 문구나 버그 수정
   - 부: 키워드나 스킬 추가
   - 주: 키워드 이름 변경이나 삭제 같은, 사용법이 달라지는 변경
@@ -1362,5 +1366,5 @@ my/                                  ← my 마켓플레이스 (git 저장소)
 6. ~~Codex·Gemini CLI에서 키워드·훅·하위 에이전트 처리 방식~~ → 확정 (2장 "도구별 처리 방식"). 설치해야 알 수 있는 항목은 2장 "구현 때 확인할 것" 목록과 H-8의 [미확인] 항목에 모아 두고 구현 때 확인한다
 7. 평가 사례 첫 묶음, 격리·복구 시험, 도구별 대화형 수용 시험 → 기준 확정. 구현과 재현 결과는 미검증
 8. ~~GitHub 공개 여부~~ → 확정: 공개 저장소 [mykim711231/my](https://github.com/mykim711231/my) (F-1)
-9. 웹 채팅창 지원 → 구현됨 (2-1장, 0.11.0: `chat.md`, `pack-web.mjs`, `learn.mjs import`). 서비스별 업로드 시험은 미검증
+9. 웹 채팅창 지원 → 구현됨 (2-1장, 0.11.0: `chat.md`, `pack-web.mjs`, `learn.mjs import`). 등록과 실행을 확인한 범위는 2-1-6의 환경별 표에 기록
 10. 아직 구현하지 않은 설계(`stack-rules`, Mermaid 검사, 다른 도구 어댑터, 다른 도구 평가, 지원 기록) → 0-1 "아직 없는 것"

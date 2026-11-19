@@ -73,6 +73,58 @@ test('웹 패키지: zip을 풀면 my/ 폴더 파일과 같다', () => {
   for (const n of names) assert.equal(files[n].toString('utf8'), read(path.join(out, n)));
 });
 
+test('웹 패키지: Claude 플러그인 zip에 Claude 매니페스트와 채팅 스킬이 있다', () => {
+  const out = tmp('my-web-');
+  const { version } = build({ out });
+  const files = unzip(fs.readFileSync(path.join(out, 'my-claude-plugin.zip')));
+  const manifestPath = '.claude-plugin/plugin.json';
+  const names = fs.readdirSync(path.join(out, 'my'));
+  const expected = [manifestPath, ...names.map((name) => `skills/my/${name}`)];
+  assert.deepEqual(Object.keys(files).sort(), expected.sort());
+
+  const manifest = JSON.parse(files[manifestPath].toString('utf8'));
+  assert.deepEqual(Object.keys(manifest).sort(), ['author', 'description', 'name', 'version']);
+  assert.equal(manifest.name, 'my');
+  assert.equal(manifest.version, version);
+  assert.equal(manifest.author.name, sources().developerName);
+  assert.ok(manifest.description.trim());
+  for (const name of names) assert.equal(files[`skills/my/${name}`].toString('utf8'), read(path.join(out, 'my', name)));
+});
+
+test('웹 패키지: ChatGPT zip에 업로드용 매니페스트와 아이콘과 스킬이 있다', () => {
+  const out = tmp('my-web-');
+  const { version } = build({ out });
+  const files = unzip(fs.readFileSync(path.join(out, 'my-chatgpt-plugin.zip')));
+  const manifestPath = '.codex-plugin/plugin.json';
+  const names = fs.readdirSync(path.join(out, 'my'));
+  const manifest = JSON.parse(files[manifestPath].toString('utf8'));
+  assert.equal(manifest.name, 'my');
+  assert.equal(manifest.version, version);
+  assert.ok(manifest.description.trim());
+  assert.equal(manifest.author.name, sources().developerName);
+  assert.equal(manifest.skills, './skills/');
+
+  const metadata = manifest.interface;
+  assert.ok(metadata.displayName.trim());
+  assert.ok(metadata.shortDescription.trim() && metadata.shortDescription.length <= 30);
+  assert.ok(metadata.longDescription.trim());
+  assert.equal(metadata.developerName, manifest.author.name);
+  assert.equal(metadata.category, 'Productivity');
+  assert.ok(Array.isArray(metadata.capabilities) && metadata.capabilities.length > 0);
+  for (const capability of metadata.capabilities) assert.ok(capability.trim());
+
+  const iconPaths = new Set();
+  for (const field of ['composerIcon', 'logo']) {
+    assert.match(metadata[field], /^\.\/assets\/.+\.svg$/);
+    const entry = metadata[field].slice(2);
+    iconPaths.add(entry);
+    assert.match(files[entry].toString('utf8'), /<svg\b[^>]*viewBox="0 0 128 128"/);
+  }
+  const expected = [manifestPath, ...iconPaths, ...names.map((name) => `skills/my/${name}`)];
+  assert.deepEqual(Object.keys(files).sort(), expected.sort());
+  for (const name of names) assert.equal(files[`skills/my/${name}`].toString('utf8'), read(path.join(out, 'my', name)));
+});
+
 test('웹 패키지: 한 파일 판은 라우터·모든 묶음·현황을 담는다', () => {
   const out = tmp('my-web-');
   build({ out });

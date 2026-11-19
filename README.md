@@ -14,9 +14,9 @@
 | Codex CLI | 마켓플레이스 명령 (아래) | `my:plugin-status` | `/hooks` 승인 후 자동 | [Codex CLI](docs/Plugin-사용법/codex.md) |
 | OpenCode 데스크탑·CLI | 저장소 복제 후 `opencode.json`에 스킬 경로 등록 | `@plugin-status` | 없음 | [OpenCode](docs/Plugin-사용법/opencode-desktop.md) |
 | Gemini CLI | 저장소 복제 후 `SKILL.md` 경로 지정 | `plugin-status/SKILL.md` 경로로 요청 | 없음 | [Gemini CLI](docs/Plugin-사용법/gemini-cli.md) |
-| claude.ai 웹 | 웹 패키지 zip을 스킬로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [claude.ai](docs/Plugin-사용법/web-claude.md) |
-| ChatGPT 웹 | 웹 패키지를 Skills로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [ChatGPT](docs/Plugin-사용법/web-chatgpt.md) |
-| Gemini 웹 | 한 파일 판을 스킬·Gem 지침·첨부로 | `마이 플러그인 현황` | 모델이 표로 판단 | [Gemini](docs/Plugin-사용법/web-gemini.md) |
+| claude.ai 웹 | `my-claude-plugin.zip`을 플러그인으로 업로드하거나 `my-skill.zip`을 스킬로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [claude.ai](docs/Plugin-사용법/web-claude.md) |
+| ChatGPT 웹 | `my-chatgpt-plugin.zip`을 새 플러그인으로 업로드 | 입력창에서 `my`를 선택하고 `마이 플러그인 현황` | 모델이 표로 판단 | [ChatGPT](docs/Plugin-사용법/web-chatgpt.md) |
+| Gemini 웹 | `dist/web/my/` 폴더를 스킬로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [Gemini](docs/Plugin-사용법/web-gemini.md) |
 
 ### 마켓플레이스 명령
 
@@ -36,11 +36,23 @@ codex plugin add my@my
 
 ### 웹 채팅 (채팅 모드)
 
-웹 채팅에서는 파일을 쓰거나 명령을 실행하지 않고, 결과를 화면과 md로 줍니다. `작업 종료`·`작업 이어서`는 인계 md로 새 채팅 창에서 이어 가는 방식이 됩니다. 웹 패키지(`dist/web/`)는 저장소를 복제한 뒤 아래 명령으로 만듭니다. 서비스별 업로드는 아직 직접 시험하지 않았습니다(미검증).
+웹 채팅에서는 결과를 화면과 Markdown으로 받습니다. `마이 작업 종료`로 받은 인계 파일을 새 대화에 첨부하고 `마이 작업 이어서`로 계속할 수 있습니다. 키워드 23개 중 21개를 채팅 모드에서 쓸 수 있습니다. `마이 플러그인 개선`과 `마이 플러그인 평가`는 로컬 전용입니다.
+
+저장소 루트에서 아래 명령으로 `dist/web/`에 웹 패키지를 만듭니다.
 
 ```powershell
 node plugins/my/scripts/pack-web.mjs
 ```
+
+| 생성물 | 사용처 |
+| --- | --- |
+| `my-chatgpt-plugin.zip` | ChatGPT 웹의 **새 플러그인** 화면 |
+| `my-claude-plugin.zip` | Claude 웹의 **내 플러그인 → 플러그인 업로드** 화면 |
+| `my/` | Gemini 웹의 **스킬 → 만들기 → 업로드** 화면에 폴더째 선택 |
+| `my-skill.zip` | Claude 웹의 **Customize → Skills → Upload a skill** 화면 |
+| `my-onefile.md` | 프로젝트·Gem 지침 또는 대화 첨부 |
+
+0.11.0에서 ChatGPT 웹의 플러그인 등록과 `@`로 `my`를 선택한 뒤의 현황 조회, Gemini 웹의 스킬 업로드 메뉴와 현황 응답을 확인했습니다. claude.ai 업로드 절차는 공식 도움말을 기준으로 안내합니다.
 
 ## 플러그인 기능과 호출 방법
 
