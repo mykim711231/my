@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveConfig, normalizePath } from './config.mjs';
+import { lastHistory } from './eval.mjs';
 import { dataDir } from './issue.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -99,6 +100,7 @@ export function buildStatus({ env = process.env, home = os.homedir(), cwd = proc
   }
   out.push('');
   if (missing.size) out.push('### 아직 없는 키워드', '', ...[...missing.values()].map((l) => `- ${l.join(' · ')}`), '');
+  else out.splice(out.indexOf('- "아직 없는 키워드"는 입력해도 동작하지 않는다.'), 1);
 
   out.push('### 최근 변경', '', ...changelog(), '');
 
@@ -127,13 +129,14 @@ export function buildStatus({ env = process.env, home = os.homedir(), cwd = proc
     out.push('- 주의: 플러그인을 제거하면 이 기록도 지워진다. 남기려면 `claude plugin uninstall my@my --keep-data`.');
   }
   if (imp.count > 0) out.push('- 기록은 이 PC에만 있고 다른 PC와 공유되지 않는다.');
+  const ev = lastHistory(path.join(dd.dir, 'eval-history.md'));
+  out.push(ev ? `- 마지막 평가: ${ev.date}, ${ev.model}, ${ev.score}` : '- 마지막 평가: 기록 없음 (`마이 플러그인 평가`)');
   out.push('');
 
   out.push(
     '### 아직 표시하지 않는 항목',
     '',
     '- 도구별 직접 호출·훅 상태: 미확인 (`support-status.mjs` 미구현)',
-    '- 마지막 평가 날짜와 모델: 기록 없음',
     '- 권장 플러그인 상태(context7, plugin-dev, skill-creator): 미확인',
   );
   return out.join('\n');

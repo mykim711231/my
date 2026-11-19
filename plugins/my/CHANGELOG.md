@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 — 2026-11-19
+
+- 플러그인 평가 스킬 추가(eval.mjs 정적 점검·사례·비용·기록, eval-ablate.mjs 지시 뺀 복사본, evals/ 사례 30개), 현황에 마지막 평가 표시
+
 ## 0.9.0 — 2026-11-19
 
 - 설정 동기화 스킬 추가(sync.mjs: 규칙 파일 AGENTS.md 참조, 스킬 폴더째 이동, 승인 diff·원본 변경 감지), change-apply 새 파일 diff 수정(Windows)
