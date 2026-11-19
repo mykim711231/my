@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveConfig, normalizePath } from './config.mjs';
+import { dataDir } from './issue.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -24,7 +25,13 @@ export function frontmatter(file) {
   const out = {};
   for (const line of m[1].split(/\r?\n/)) {
     const kv = /^([A-Za-z_-]+):\s*(.*)$/.exec(line);
-    if (kv) out[kv[1]] = kv[2].replace(/^["']|["']$/g, '');
+    if (!kv) continue;
+    const v = kv[2].trim();
+    try {
+      out[kv[1]] = v.startsWith('"') ? JSON.parse(v) : v.replace(/^'|'$/g, '');
+    } catch {
+      out[kv[1]] = v.replace(/^["']|["']$/g, '');
+    }
   }
   return out;
 }
@@ -45,12 +52,6 @@ function changelog(n = 5) {
   if (!fs.existsSync(f)) return ['- (CHANGELOG.md 없음)'];
   const heads = fs.readFileSync(f, 'utf8').split(/\r?\n/).filter((l) => /^## /.test(l));
   return heads.slice(0, n).map((l) => '- ' + l.slice(3));
-}
-
-function dataDir(env, home) {
-  if (env.CLAUDE_PLUGIN_DATA) return { dir: env.CLAUDE_PLUGIN_DATA, how: 'CLAUDE_PLUGIN_DATA' };
-  if (env.PLUGIN_DATA) return { dir: env.PLUGIN_DATA, how: 'PLUGIN_DATA' };
-  return { dir: path.join(home, '.my', 'data'), how: '대체 경로' };
 }
 
 function improvements(dir) {
@@ -74,10 +75,19 @@ export function buildStatus({ env = process.env, home = os.homedir(), cwd = proc
 
   out.push('## my 플러그인 현황', '', `- 버전: ${install(home, version)}`, '');
 
+  out.push(
+    '### 사용법',
+    '',
+    `- 아래 키워드를 \`${table.prefix} \`로 시작해 그대로 입력한다. \`{ }\`는 직접 채우는 값이다. 예: \`${table.prefix} 플러그인 문제 키워드가 두 번 들어감\``,
+    `- 첫 단어까지만 입력하면(예: \`${table.prefix} 학습\`) 그 묶음의 양식만 보여 주고 아무 작업도 하지 않는다.`,
+    `- \`${table.prefix}\` 뒤에 등록되지 않은 말이 오면 일반 대화로 처리한다. 영문 \`my\`는 키워드로 인식하지 않는다.`,
+    '- (미구현) 스킬은 아직 동작하지 않는다.',
+    '',
+  );
   out.push('### 키워드 → 동작', '', '| 키워드 | 스킬 | 동작 |', '|---|---|---|');
   for (const c of table.commands) {
     const fm = frontmatter(path.join(ROOT, 'skills', c.skill, 'SKILL.md'));
-    const desc = fm === null ? '(미구현)' : (fm.description || '').split(/(?<=[.다])\s/)[0];
+    const desc = fm === null ? '(미구현)' : (fm.description || '').split(/(?<=\.)\s/)[0];
     out.push(`| \`${table.prefix} ${c.form}\` | \`${c.skill}\` | ${desc.replace(/\|/g, '\\|')} |`);
   }
   out.push('');
@@ -104,7 +114,12 @@ export function buildStatus({ env = process.env, home = os.homedir(), cwd = proc
 
   const dd = dataDir(env, home);
   const imp = improvements(dd.dir);
-  out.push('### 개선 대기', '', `- ${imp.count}건 (데이터 폴더: ${dd.how})`, ...imp.titles.map((t) => `  - ${t}`), '');
+  out.push('### 개선 대기', '', `- ${imp.count}건 (데이터 폴더: ${dd.how})`, ...imp.titles.map((t) => `  - ${t}`));
+  if (imp.count > 0 && dd.how === 'CLAUDE_PLUGIN_DATA') {
+    out.push('- 주의: 플러그인을 제거하면 이 기록도 지워진다. 남기려면 `claude plugin uninstall my@my --keep-data`.');
+  }
+  if (imp.count > 0) out.push('- 기록은 이 PC에만 있고 다른 PC와 공유되지 않는다.');
+  out.push('');
 
   out.push(
     '### 아직 표시하지 않는 항목',
