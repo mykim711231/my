@@ -1,0 +1,15 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "my",
+  "description": "개인 다용도 플러그인 my의 마켓플레이스",
+  "owner": {
+    "name": "mykim711231"
+  },
+  "plugins": [
+    {
+      "name": "my",
+      "description": "\"마이 …\" 키워드로 세션 흐름, 학습, 프로젝트, 설정, 플러그인 관리를 한곳에서 쓴다",
+      "source": "./plugins/my"
+    }
+  ]
+}

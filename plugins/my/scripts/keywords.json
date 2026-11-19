@@ -1,0 +1,28 @@
+{
+  "prefix": "마이",
+  "commands": [
+    { "form": "작업 시작", "skill": "work-start" },
+    { "form": "작업 종료", "skill": "work-end" },
+    { "form": "작업 이어서", "skill": "work-resume" },
+    { "form": "작업 현황", "skill": "work-status" },
+    { "form": "수업 학습", "skill": "learn-class" },
+    { "form": "논문 학습", "skill": "learn-paper" },
+    { "form": "기존 소스 학습", "skill": "learn-source" },
+    { "form": "깃허브 학습", "skill": "learn-github" },
+    { "form": "적대적 학습 {대상}", "skill": "learn-adversarial" },
+    { "form": "학습 목록", "skill": "learn-manage" },
+    { "form": "학습 통합 {주제}", "skill": "learn-manage" },
+    { "form": "학습 점검", "skill": "learn-manage" },
+    { "form": "프로젝트 {name} 생성", "skill": "project-create" },
+    { "form": "프로젝트 {name} 정의", "skill": "project-define" },
+    { "form": "프로젝트 {name} 구현", "skill": "project-build" },
+    { "form": "프로젝트 {name} 검증", "skill": "project-verify" },
+    { "form": "프로젝트 {name} 배포", "skill": "project-deploy" },
+    { "form": "설정 동기화 {원본}->{대상}", "skill": "sync" },
+    { "form": "플러그인 현황", "skill": "plugin-status" },
+    { "form": "플러그인 문제 {내용}", "skill": "plugin-issue" },
+    { "form": "플러그인 개선", "skill": "plugin-apply" },
+    { "form": "플러그인 평가", "skill": "plugin-eval" },
+    { "form": "플러그인 설정", "skill": "plugin-config" }
+  ]
+}

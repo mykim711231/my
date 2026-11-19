@@ -1,0 +1,19 @@
+{
+  "description": "my 키워드 라우팅(UserPromptSubmit)과 태도 규칙(SessionStart)",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/keyword.mjs\"" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/keyword.mjs\" stance" }
+        ]
+      }
+    ]
+  }
+}
