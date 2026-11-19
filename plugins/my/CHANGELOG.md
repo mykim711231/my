@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 — 2026-11-19
+
+- `마이 플러그인 개선`(plugin-apply) 추가: 대기 기록 선택 → diff 승인 → 원본 수정 → 검증 → 버전 올림·CHANGELOG → 완료 표시
+- `scripts/apply.mjs`: list·show·check·bump·done (매니페스트 버전 일치 검사, 커밋 안 된 변경 수 표시)
+
 ## 0.3.0
 
 - `plugin-config` 스킬: `마이 플러그인 설정`으로 설정 현황표(값·출처·폴더 상태·env 가림·폴더 없는 프로젝트 항목)를 보여 주고, 고른 항목을 diff 미리보기 → 승인 → 저장한다.
