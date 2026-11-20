@@ -6,19 +6,22 @@
 
 쓰는 곳의 가이드를 따라 설치한 뒤, 새 세션에서 "설치 확인" 칸의 입력으로 버전과 전체 키워드가 나오는지 봅니다. "`마이` 키워드" 칸이 자동이 아닌 곳에서는 스킬 이름으로 부르거나 모델이 키워드 표를 보고 고릅니다.
 
-| 사용 환경 | 설치 방식 | 설치 확인 | `마이` 키워드 | 가이드 |
-| --- | --- | --- | --- | --- |
-| Claude 데스크탑 (Code 탭) | 앱에서 마켓플레이스 추가 후 설치 | `마이 플러그인 현황` | 자동(훅) | [Claude 데스크탑](docs/Plugin-사용법/claude-desktop.md) |
-| Claude Code CLI | 마켓플레이스 명령 (아래) | `마이 플러그인 현황` | 자동(훅) | [Claude Code CLI](docs/Plugin-사용법/claude-code.md) |
-| ChatGPT 데스크탑 (Codex) | 마켓플레이스 등록 후 앱에서 설치 | `my:plugin-status` | CLI `/hooks` 승인 후 자동 | [ChatGPT 데스크탑](docs/Plugin-사용법/chatgpt-desktop.md) |
-| Codex CLI | 마켓플레이스 명령 (아래) | `my:plugin-status` | `/hooks` 승인 후 자동 | [Codex CLI](docs/Plugin-사용법/codex.md) |
-| OpenCode 데스크탑·CLI | 저장소 복제 후 `opencode.json`에 스킬 경로 등록 | `@plugin-status` | 없음 | [OpenCode](docs/Plugin-사용법/opencode-desktop.md) |
-| Gemini CLI | 저장소 복제 후 `SKILL.md` 경로 지정 | `plugin-status/SKILL.md` 경로로 요청 | 없음 | [Gemini CLI](docs/Plugin-사용법/gemini-cli.md) |
-| claude.ai 웹 | `my-claude-plugin.zip`을 플러그인으로 업로드하거나 `my-skill.zip`을 스킬로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [claude.ai](docs/Plugin-사용법/web-claude.md) |
-| ChatGPT 웹 | `my-chatgpt-plugin.zip`을 새 플러그인으로 업로드 | 입력창에서 `my`를 선택하고 `마이 플러그인 현황` | 모델이 표로 판단 | [ChatGPT](docs/Plugin-사용법/web-chatgpt.md) |
-| Gemini 웹 | `dist/web/my/` 폴더를 스킬로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [Gemini](docs/Plugin-사용법/web-gemini.md) |
+### 데스크탑
 
-### 마켓플레이스 명령
+| 앱 | 설치 방식 | 설치 확인 | `마이` 키워드 | 가이드 |
+| --- | --- | --- | --- | --- |
+| Claude (Code 탭) | 앱에서 마켓플레이스 추가 후 설치 | `마이 플러그인 현황` | 자동(훅) | [Claude 데스크탑](docs/Plugin-사용법/claude-desktop.md) |
+| ChatGPT (Codex) | 마켓플레이스 등록 후 앱에서 설치 | `my:plugin-status` | CLI `/hooks` 승인 후 자동 | [ChatGPT 데스크탑](docs/Plugin-사용법/chatgpt-desktop.md) |
+| OpenCode | 저장소 복제 후 `opencode.json`에 스킬 경로 등록 | `@plugin-status` | 없음 | [OpenCode](docs/Plugin-사용법/opencode-desktop.md) |
+
+### CLI
+
+| 도구 | 설치 방식 | 설치 확인 | `마이` 키워드 | 가이드 |
+| --- | --- | --- | --- | --- |
+| Claude Code | 마켓플레이스 명령 (아래) | `마이 플러그인 현황` | 자동(훅) | [Claude Code CLI](docs/Plugin-사용법/claude-code.md) |
+| Codex | 마켓플레이스 명령 (아래) | `my:plugin-status` | `/hooks` 승인 후 자동 | [Codex CLI](docs/Plugin-사용법/codex.md) |
+| OpenCode | 데스크탑과 같은 설정 | `@plugin-status` | 없음 | [OpenCode](docs/Plugin-사용법/opencode-desktop.md) |
+| Gemini CLI | 저장소 복제 후 `SKILL.md` 경로 지정 | `plugin-status/SKILL.md` 경로로 요청 | 없음 | [Gemini CLI](docs/Plugin-사용법/gemini-cli.md) |
 
 Claude Code CLI:
 
@@ -34,7 +37,13 @@ codex plugin marketplace add mykim711231/my
 codex plugin add my@my
 ```
 
-### 웹 채팅 (채팅 모드)
+### 웹
+
+| 서비스 | 설치 방식 | 설치 확인 | `마이` 키워드 | 가이드 |
+| --- | --- | --- | --- | --- |
+| claude.ai | `my-claude-plugin.zip`을 플러그인으로 업로드하거나 `my-skill.zip`을 스킬로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [claude.ai](docs/Plugin-사용법/web-claude.md) |
+| ChatGPT | `my-chatgpt-plugin.zip`을 새 플러그인으로 업로드 | 입력창에서 `my`를 선택하고 `마이 플러그인 현황` | 모델이 표로 판단 | [ChatGPT](docs/Plugin-사용법/web-chatgpt.md) |
+| Gemini | `dist/web/my/` 폴더를 스킬로 업로드 | `마이 플러그인 현황` | 모델이 표로 판단 | [Gemini](docs/Plugin-사용법/web-gemini.md) |
 
 웹 채팅에서는 결과를 화면과 Markdown으로 받습니다. `마이 작업 종료`로 받은 인계 파일을 새 대화에 첨부하고 `마이 작업 이어서`로 계속할 수 있습니다. 키워드 23개 중 21개를 채팅 모드에서 쓸 수 있습니다. `마이 플러그인 개선`과 `마이 플러그인 평가`는 로컬 전용입니다.
 
